@@ -210,14 +210,25 @@ Verifies TDX quotes and attestation tokens:
 
 ## Output Files
 
-After running the scripts, you'll find these files:
+After running the scripts, you'll find these files organized in directories:
 
+### JSON Files (`json/` directory)
 - `tdx-evidence.json` - Raw TDX evidence data
 - `tdx-token.json` - Attestation token from Intel Trust Authority
 - `tdx-quote.bin` - Binary TDX quote (if generated)
 - `tdx-attestation-report.json` - Comprehensive attestation report
 - `tdx-verification-report.json` - Verification results
+- `tdx-local-evidence.json` - Local TDX evidence (without API)
+- `tdx-mock-evidence.json` - Mock TDX evidence for testing
+
+### Log Files (`log/` directory)
 - `tdx-attestation.log` - Detailed execution log
+- `tdx-local-attestation.log` - Local attestation log
+- `tdx-mock-attestation.log` - Mock attestation log
+- `tdx-system-analyzer.log` - System analysis log
+- `tdx-verifier.log` - Verification log
+
+**Note**: The `json/` and `log/` directories are excluded from version control via `.gitignore` since they contain generated output files.
 
 ## Troubleshooting
 

@@ -1,0 +1,35 @@
+# TDX Attestation Output Files
+# These folders contain generated output files that should not be committed
+
+# JSON output files (evidence, tokens, reports, quotes)
+json/
+
+# Log files from script execution
+log/
+
+# Configuration files with sensitive data
+config.json
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Backup files
+*.bak
+*.backup
