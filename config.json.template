@@ -1,0 +1,20 @@
+{
+    "trustauthority_api_url": "https://api.trustauthority.intel.com",
+    "trustauthority_api_key": "YOUR_API_KEY_HERE",
+    "attestation_policy": {
+        "enforce_tdx": true,
+        "require_secure_boot": true,
+        "require_measured_boot": true
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "tdx-attestation.log",
+        "max_size_mb": 10,
+        "backup_count": 5
+    },
+    "output": {
+        "evidence_file": "tdx-evidence.json",
+        "token_file": "tdx-token.json",
+        "report_file": "tdx-attestation-report.json"
+    }
+}
