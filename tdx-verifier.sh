@@ -32,6 +32,15 @@ log() {
     echo -e "${timestamp} [${level}] ${message}" | tee -a "${LOG_FILE}"
 }
 
+# Logging function for quiet mode (only to log file)
+log_quiet() {
+    local level="$1"
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo -e "${timestamp} [${level}] ${message}" >> "${LOG_FILE}"
+}
+
 log_info() {
     log "INFO" "${BLUE}$*${NC}"
 }
@@ -46,6 +55,23 @@ log_warning() {
 
 log_error() {
     log "ERROR" "${RED}$*${NC}"
+}
+
+# Quiet logging functions (only to log file)
+log_info_quiet() {
+    log_quiet "INFO" "${BLUE}$*${NC}"
+}
+
+log_success_quiet() {
+    log_quiet "SUCCESS" "${GREEN}$*${NC}"
+}
+
+log_warning_quiet() {
+    log_quiet "WARNING" "${YELLOW}$*${NC}"
+}
+
+log_error_quiet() {
+    log_quiet "ERROR" "${RED}$*${NC}"
 }
 
 # Display usage
@@ -70,12 +96,18 @@ verify_evidence() {
     local evidence_file="$1"
     local quiet_mode="${2:-false}"
     
-    if [[ "${quiet_mode}" != "true" ]]; then
+    if [[ "${quiet_mode}" == "true" ]]; then
+        log_info_quiet "Verifying TDX evidence file: ${evidence_file}"
+    else
         log_info "Verifying TDX evidence file: ${evidence_file}"
     fi
     
     if [[ ! -f "${evidence_file}" ]]; then
-        log_error "Evidence file not found: ${evidence_file}"
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_error_quiet "Evidence file not found: ${evidence_file}"
+        else
+            log_error "Evidence file not found: ${evidence_file}"
+        fi
         return 1
     fi
     
@@ -84,7 +116,9 @@ verify_evidence() {
     
     # Check if file is valid JSON
     if jq empty "${evidence_file}" 2>/dev/null; then
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_success_quiet "Evidence file is valid JSON"
+        else
             log_success "Evidence file is valid JSON"
         fi
         
@@ -94,7 +128,9 @@ verify_evidence() {
         local has_report_data=$(jq -e '.evidence.reportData' "${evidence_file}" > /dev/null 2>&1 && echo "true" || echo "false")
         
         if [[ "${has_evidence}" == "true" ]]; then
-            if [[ "${quiet_mode}" != "true" ]]; then
+            if [[ "${quiet_mode}" == "true" ]]; then
+                log_success_quiet "Evidence structure is valid"
+            else
                 log_success "Evidence structure is valid"
             fi
             is_valid=true
@@ -115,12 +151,16 @@ verify_evidence() {
                 fi
             fi
         else
-            if [[ "${quiet_mode}" != "true" ]]; then
+            if [[ "${quiet_mode}" == "true" ]]; then
+                log_error_quiet "Evidence structure is invalid - missing 'evidence' field"
+            else
                 log_error "Evidence structure is invalid - missing 'evidence' field"
             fi
         fi
     else
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_error_quiet "Evidence file is not valid JSON"
+        else
             log_error "Evidence file is not valid JSON"
         fi
     fi
@@ -134,12 +174,16 @@ verify_token() {
     local token_file="$1"
     local quiet_mode="${2:-false}"
     
-    if [[ "${quiet_mode}" != "true" ]]; then
+    if [[ "${quiet_mode}" == "true" ]]; then
+        log_info_quiet "Verifying attestation token file: ${token_file}"
+    else
         log_info "Verifying attestation token file: ${token_file}"
     fi
     
     if [[ ! -f "${token_file}" ]]; then
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_error_quiet "Token file not found: ${token_file}"
+        else
             log_error "Token file not found: ${token_file}"
         fi
         return 1
@@ -150,7 +194,9 @@ verify_token() {
     
     # Check if file is valid JSON
     if jq empty "${token_file}" 2>/dev/null; then
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_success_quiet "Token file is valid JSON"
+        else
             log_success "Token file is valid JSON"
         fi
         
@@ -161,7 +207,9 @@ verify_token() {
             local token_value=$(jq -r '.token' "${token_file}")
             
             if [[ -n "${token_value}" && "${token_value}" != "null" ]]; then
-                if [[ "${quiet_mode}" != "true" ]]; then
+                if [[ "${quiet_mode}" == "true" ]]; then
+                    log_success_quiet "Token is present and non-empty"
+                else
                     log_success "Token is present and non-empty"
                 fi
                 is_valid=true
@@ -180,17 +228,23 @@ verify_token() {
                     log_info "Token preview: ${token_preview}..."
                 fi
             else
-                if [[ "${quiet_mode}" != "true" ]]; then
+                if [[ "${quiet_mode}" == "true" ]]; then
+                    log_error_quiet "Token is empty or null"
+                else
                     log_error "Token is empty or null"
                 fi
             fi
         else
-            if [[ "${quiet_mode}" != "true" ]]; then
+            if [[ "${quiet_mode}" == "true" ]]; then
+                log_error_quiet "Token structure is invalid - missing 'token' field"
+            else
                 log_error "Token structure is invalid - missing 'token' field"
             fi
         fi
     else
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_error_quiet "Token file is not valid JSON"
+        else
             log_error "Token file is not valid JSON"
         fi
     fi
@@ -204,12 +258,16 @@ verify_quote() {
     local quote_file="$1"
     local quiet_mode="${2:-false}"
     
-    if [[ "${quiet_mode}" != "true" ]]; then
+    if [[ "${quiet_mode}" == "true" ]]; then
+        log_info_quiet "Verifying TDX quote file: ${quote_file}"
+    else
         log_info "Verifying TDX quote file: ${quote_file}"
     fi
     
     if [[ ! -f "${quote_file}" ]]; then
-        if [[ "${quiet_mode}" != "true" ]]; then
+        if [[ "${quiet_mode}" == "true" ]]; then
+            log_error_quiet "Quote file not found: ${quote_file}"
+        else
             log_error "Quote file not found: ${quote_file}"
         fi
         return 1
