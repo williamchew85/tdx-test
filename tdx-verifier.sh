@@ -68,8 +68,11 @@ usage() {
 # Verify TDX evidence file
 verify_evidence() {
     local evidence_file="$1"
+    local quiet_mode="${2:-false}"
     
-    log_info "Verifying TDX evidence file: ${evidence_file}"
+    if [[ "${quiet_mode}" != "true" ]]; then
+        log_info "Verifying TDX evidence file: ${evidence_file}"
+    fi
     
     if [[ ! -f "${evidence_file}" ]]; then
         log_error "Evidence file not found: ${evidence_file}"
@@ -81,7 +84,9 @@ verify_evidence() {
     
     # Check if file is valid JSON
     if jq empty "${evidence_file}" 2>/dev/null; then
-        log_success "Evidence file is valid JSON"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_success "Evidence file is valid JSON"
+        fi
         
         # Check for required fields
         local has_evidence=$(jq -e '.evidence' "${evidence_file}" > /dev/null 2>&1 && echo "true" || echo "false")
@@ -89,27 +94,35 @@ verify_evidence() {
         local has_report_data=$(jq -e '.evidence.reportData' "${evidence_file}" > /dev/null 2>&1 && echo "true" || echo "false")
         
         if [[ "${has_evidence}" == "true" ]]; then
-            log_success "Evidence structure is valid"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_success "Evidence structure is valid"
+            fi
             is_valid=true
             
             # Extract and display key information
-            local evidence_size=$(jq -r '.evidence | keys | length' "${evidence_file}")
-            log_info "Evidence contains ${evidence_size} fields"
-            
-            if [[ "${has_quote}" == "true" ]]; then
-                local quote_size=$(jq -r '.evidence.quote | length' "${evidence_file}")
-                log_info "Quote size: ${quote_size} characters"
-            fi
-            
-            if [[ "${has_report_data}" == "true" ]]; then
-                local report_data_size=$(jq -r '.evidence.reportData | length' "${evidence_file}")
-                log_info "Report data size: ${report_data_size} characters"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                local evidence_size=$(jq -r '.evidence | keys | length' "${evidence_file}")
+                log_info "Evidence contains ${evidence_size} fields"
+                
+                if [[ "${has_quote}" == "true" ]]; then
+                    local quote_size=$(jq -r '.evidence.quote | length' "${evidence_file}")
+                    log_info "Quote size: ${quote_size} characters"
+                fi
+                
+                if [[ "${has_report_data}" == "true" ]]; then
+                    local report_data_size=$(jq -r '.evidence.reportData | length' "${evidence_file}")
+                    log_info "Report data size: ${report_data_size} characters"
+                fi
             fi
         else
-            log_error "Evidence structure is invalid - missing 'evidence' field"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_error "Evidence structure is invalid - missing 'evidence' field"
+            fi
         fi
     else
-        log_error "Evidence file is not valid JSON"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Evidence file is not valid JSON"
+        fi
     fi
     
     verification_result="{\"file\": \"${evidence_file}\", \"valid\": ${is_valid}, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
@@ -119,11 +132,16 @@ verify_evidence() {
 # Verify attestation token
 verify_token() {
     local token_file="$1"
+    local quiet_mode="${2:-false}"
     
-    log_info "Verifying attestation token file: ${token_file}"
+    if [[ "${quiet_mode}" != "true" ]]; then
+        log_info "Verifying attestation token file: ${token_file}"
+    fi
     
     if [[ ! -f "${token_file}" ]]; then
-        log_error "Token file not found: ${token_file}"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Token file not found: ${token_file}"
+        fi
         return 1
     fi
     
@@ -132,7 +150,9 @@ verify_token() {
     
     # Check if file is valid JSON
     if jq empty "${token_file}" 2>/dev/null; then
-        log_success "Token file is valid JSON"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_success "Token file is valid JSON"
+        fi
         
         # Check for token field
         local has_token=$(jq -e '.token' "${token_file}" > /dev/null 2>&1 && echo "true" || echo "false")
@@ -141,28 +161,38 @@ verify_token() {
             local token_value=$(jq -r '.token' "${token_file}")
             
             if [[ -n "${token_value}" && "${token_value}" != "null" ]]; then
-                log_success "Token is present and non-empty"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    log_success "Token is present and non-empty"
+                fi
                 is_valid=true
                 
-                # Basic token format validation (JWT-like structure)
-                local token_parts=$(echo "${token_value}" | tr '.' '\n' | wc -l)
-                if [[ ${token_parts} -eq 3 ]]; then
-                    log_success "Token appears to be in JWT format (3 parts)"
-                else
-                    log_warning "Token format is not standard JWT (${token_parts} parts)"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    # Basic token format validation (JWT-like structure)
+                    local token_parts=$(echo "${token_value}" | tr '.' '\n' | wc -l)
+                    if [[ ${token_parts} -eq 3 ]]; then
+                        log_success "Token appears to be in JWT format (3 parts)"
+                    else
+                        log_warning "Token format is not standard JWT (${token_parts} parts)"
+                    fi
+                    
+                    # Display token preview
+                    local token_preview=$(echo "${token_value}" | head -c 50)
+                    log_info "Token preview: ${token_preview}..."
                 fi
-                
-                # Display token preview
-                local token_preview=$(echo "${token_value}" | head -c 50)
-                log_info "Token preview: ${token_preview}..."
             else
-                log_error "Token is empty or null"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    log_error "Token is empty or null"
+                fi
             fi
         else
-            log_error "Token structure is invalid - missing 'token' field"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_error "Token structure is invalid - missing 'token' field"
+            fi
         fi
     else
-        log_error "Token file is not valid JSON"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Token file is not valid JSON"
+        fi
     fi
     
     verification_result="{\"file\": \"${token_file}\", \"valid\": ${is_valid}, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
@@ -172,11 +202,16 @@ verify_token() {
 # Verify TDX quote file
 verify_quote() {
     local quote_file="$1"
+    local quiet_mode="${2:-false}"
     
-    log_info "Verifying TDX quote file: ${quote_file}"
+    if [[ "${quiet_mode}" != "true" ]]; then
+        log_info "Verifying TDX quote file: ${quote_file}"
+    fi
     
     if [[ ! -f "${quote_file}" ]]; then
-        log_error "Quote file not found: ${quote_file}"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Quote file not found: ${quote_file}"
+        fi
         return 1
     fi
     
@@ -185,32 +220,46 @@ verify_quote() {
     
     # Check file size (TDX quotes are typically several KB)
     local file_size=$(stat -c%s "${quote_file}")
-    log_info "Quote file size: ${file_size} bytes"
+    if [[ "${quiet_mode}" != "true" ]]; then
+        log_info "Quote file size: ${file_size} bytes"
+    fi
     
     if [[ ${file_size} -gt 0 ]]; then
-        log_success "Quote file is not empty"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_success "Quote file is not empty"
+        fi
         
         # Check if it's a binary file
         if file "${quote_file}" | grep -q "data\|binary"; then
-            log_success "Quote file appears to be binary data"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_success "Quote file appears to be binary data"
+            fi
             is_valid=true
         else
-            log_warning "Quote file may not be binary data"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_warning "Quote file may not be binary data"
+            fi
             # Check if it's base64 encoded
             if head -c 100 "${quote_file}" | base64 -d > /dev/null 2>&1; then
-                log_info "Quote file appears to be base64 encoded"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    log_info "Quote file appears to be base64 encoded"
+                fi
                 is_valid=true
             fi
         fi
         
-        # Display first few bytes in hex
-        local hex_preview=$(xxd -l 32 "${quote_file}" | head -2)
-        log_info "Quote hex preview:"
-        echo "${hex_preview}" | while read line; do
-            log_info "  ${line}"
-        done
+        if [[ "${quiet_mode}" != "true" ]]; then
+            # Display first few bytes in hex
+            local hex_preview=$(xxd -l 32 "${quote_file}" | head -2)
+            log_info "Quote hex preview:"
+            echo "${hex_preview}" | while read line; do
+                log_info "  ${line}"
+            done
+        fi
     else
-        log_error "Quote file is empty"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Quote file is empty"
+        fi
     fi
     
     verification_result="{\"file\": \"${quote_file}\", \"valid\": ${is_valid}, \"size\": ${file_size}, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
@@ -235,7 +284,7 @@ verify_all() {
     for evidence_file in "${evidence_files[@]}"; do
         if [[ -f "${evidence_file}" ]]; then
             log_info "Found evidence file: ${evidence_file}"
-            local result=$(verify_evidence "${evidence_file}")
+            local result=$(verify_evidence "${evidence_file}" "true")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -251,7 +300,7 @@ verify_all() {
     for token_file in "${token_files[@]}"; do
         if [[ -f "${token_file}" ]]; then
             log_info "Found token file: ${token_file}"
-            local result=$(verify_token "${token_file}")
+            local result=$(verify_token "${token_file}" "true")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -268,7 +317,7 @@ verify_all() {
     for quote_file in "${quote_files[@]}"; do
         if [[ -f "${quote_file}" ]]; then
             log_info "Found quote file: ${quote_file}"
-            local result=$(verify_quote "${quote_file}")
+            local result=$(verify_quote "${quote_file}" "true")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
