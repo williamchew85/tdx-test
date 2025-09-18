@@ -56,53 +56,51 @@ generate_mock_evidence() {
     log_info "Generating mock TDX evidence..."
     
     local mock_evidence
-    mock_evidence=$(cat << EOF
-{
+    mock_evidence='{
     "evidence": {
         "version": "1.0",
         "type": "TDX_EVIDENCE",
-        "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-        "quote": "$(openssl rand -hex 1024 2>/dev/null || echo "mock_quote_data_$(date +%s)")",
-        "reportData": "$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")",
+        "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+        "quote": "'"$(openssl rand -hex 1024 2>/dev/null || echo "mock_quote_data_$(date +%s)")"'",
+        "reportData": "'"$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")"'",
         "tdxModule": {
-            "mrsigner": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrsigner_$(date +%s)")",
-            "attributes": "$(openssl rand -hex 16 2>/dev/null || echo "mock_attributes_$(date +%s)")",
-            "attributesMask": "$(openssl rand -hex 16 2>/dev/null || echo "mock_mask_$(date +%s)")",
-            "mrtd": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")",
-            "mrconfig_id": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrconfig_$(date +%s)")",
-            "mrowner": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrowner_$(date +%s)")",
-            "mrownerconfig": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrownerconfig_$(date +%s)")",
-            "rtmr0": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr0_$(date +%s)")",
-            "rtmr1": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr1_$(date +%s)")",
-            "rtmr2": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr2_$(date +%s)")",
-            "rtmr3": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr3_$(date +%s)")"
+            "mrsigner": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrsigner_$(date +%s)")"'",
+            "attributes": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_attributes_$(date +%s)")"'",
+            "attributesMask": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_mask_$(date +%s)")"'",
+            "mrtd": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")"'",
+            "mrconfig_id": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrconfig_$(date +%s)")"'",
+            "mrowner": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrowner_$(date +%s)")"'",
+            "mrownerconfig": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrownerconfig_$(date +%s)")"'",
+            "rtmr0": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr0_$(date +%s)")"'",
+            "rtmr1": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr1_$(date +%s)")"'",
+            "rtmr2": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr2_$(date +%s)")"'",
+            "rtmr3": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr3_$(date +%s)")"'"
         },
         "tdxTcbInfo": {
             "tcbType": "TDX_TCB",
-            "tcbSvn": "$(openssl rand -hex 16 2>/dev/null || echo "mock_tcb_svn_$(date +%s)")",
-            "pceSvn": "$(openssl rand -hex 4 2>/dev/null || echo "mock_pce_svn_$(date +%s)")",
-            "pceId": "$(openssl rand -hex 4 2>/dev/null || echo "mock_pce_id_$(date +%s)")",
-            "fmspc": "$(openssl rand -hex 6 2>/dev/null || echo "mock_fmspc_$(date +%s)")",
-            "pceId": "$(openssl rand -hex 4 2>/dev/null || echo "mock_pce_id_$(date +%s)")",
+            "tcbSvn": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_tcb_svn_$(date +%s)")"'",
+            "pceSvn": "'"$(openssl rand -hex 4 2>/dev/null || echo "mock_pce_svn_$(date +%s)")"'",
+            "pceId": "'"$(openssl rand -hex 4 2>/dev/null || echo "mock_pce_id_$(date +%s)")"'",
+            "fmspc": "'"$(openssl rand -hex 6 2>/dev/null || echo "mock_fmspc_$(date +%s)")"'",
             "tdxTcbComponents": [
                 {
-                    "svn": "$(openssl rand -hex 2 2>/dev/null || echo "01")",
+                    "svn": "'"$(openssl rand -hex 2 2>/dev/null || echo "01")"'",
                     "category": "TDX_TEE_TCB",
                     "type": "TDX_TEE_TCB_COMPONENT"
                 },
                 {
-                    "svn": "$(openssl rand -hex 2 2>/dev/null || echo "02")",
+                    "svn": "'"$(openssl rand -hex 2 2>/dev/null || echo "02")"'",
                     "category": "TDX_TEE_TCB",
                     "type": "TDX_TEE_TCB_COMPONENT"
                 }
             ]
         },
         "systemInfo": {
-            "hostname": "$(hostname)",
-            "kernel": "$(uname -r)",
-            "architecture": "$(uname -m)",
-            "bootTime": "$(uptime -s 2>/dev/null || date -r $(sysctl -n kern.boottime | cut -d',' -f1 | cut -d' ' -f4) 2>/dev/null || echo 'unknown')",
-            "uptime": "$(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4- 2>/dev/null || echo 'unknown')"
+            "hostname": "'"$(hostname)"'",
+            "kernel": "'"$(uname -r)"'",
+            "architecture": "'"$(uname -m)"'",
+            "bootTime": "'"$(uptime -s 2>/dev/null || date -r $(sysctl -n kern.boottime | cut -d',' -f1 | cut -d' ' -f4) 2>/dev/null || echo 'unknown')"'",
+            "uptime": "'"$(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4- 2>/dev/null || echo 'unknown')"'"
         }
     },
     "metadata": {
@@ -112,9 +110,7 @@ generate_mock_evidence() {
         "purpose": "testing_and_development",
         "warning": "This is mock data for testing purposes only"
     }
-}
-EOF
-)
+}'
     
     if command -v jq &> /dev/null; then
         echo "${mock_evidence}" | jq '.' > "${MOCK_EVIDENCE}" 2>/dev/null || echo "${mock_evidence}" > "${MOCK_EVIDENCE}"
@@ -159,9 +155,8 @@ EOF
     local mock_token="${header}.${payload}.${signature}"
     
     local token_response
-    token_response=$(cat << EOF
-{
-    "token": "${mock_token}",
+    token_response='{
+    "token": "'"${mock_token}"'",
     "token_type": "Bearer",
     "expires_in": 3600,
     "scope": "tdx_attestation",
@@ -172,9 +167,7 @@ EOF
         "purpose": "testing_and_development",
         "warning": "This is a mock token for testing purposes only"
     }
-}
-EOF
-)
+}'
     
     if command -v jq &> /dev/null; then
         echo "${token_response}" | jq '.' > "${MOCK_TOKEN}" 2>/dev/null || echo "${token_response}" > "${MOCK_TOKEN}"
@@ -190,31 +183,30 @@ generate_mock_quote() {
     
     # Create a realistic TDX quote structure
     local mock_quote
-    mock_quote=$(cat << EOF
-{
+    mock_quote='{
     "quote_header": {
         "version": 1,
         "att_key_type": 2,
-        "tee_type": 0x00000081,
+        "tee_type": 33619969,
         "reserved": [0, 0, 0, 0]
     },
     "quote_body": {
-        "mrseam": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrseam_$(date +%s)")",
-        "mrsigner_seam": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrsigner_seam_$(date +%s)")",
-        "seamattributes": "$(openssl rand -hex 16 2>/dev/null || echo "mock_seam_attributes_$(date +%s)")",
-        "tdattributes": "$(openssl rand -hex 16 2>/dev/null || echo "mock_td_attributes_$(date +%s)")",
-        "xfam": "$(openssl rand -hex 16 2>/dev/null || echo "mock_xfam_$(date +%s)")",
-        "mrtd": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")",
-        "mrconfig_id": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrconfig_id_$(date +%s)")",
-        "mrowner": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrowner_$(date +%s)")",
-        "mrownerconfig": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrownerconfig_$(date +%s)")",
-        "rtmr0": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr0_$(date +%s)")",
-        "rtmr1": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr1_$(date +%s)")",
-        "rtmr2": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr2_$(date +%s)")",
-        "rtmr3": "$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr3_$(date +%s)")",
-        "report_data": "$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")"
+        "mrseam": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrseam_$(date +%s)")"'",
+        "mrsigner_seam": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrsigner_seam_$(date +%s)")"'",
+        "seamattributes": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_seam_attributes_$(date +%s)")"'",
+        "tdattributes": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_td_attributes_$(date +%s)")"'",
+        "xfam": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_xfam_$(date +%s)")"'",
+        "mrtd": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")"'",
+        "mrconfig_id": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrconfig_id_$(date +%s)")"'",
+        "mrowner": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrowner_$(date +%s)")"'",
+        "mrownerconfig": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrownerconfig_$(date +%s)")"'",
+        "rtmr0": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr0_$(date +%s)")"'",
+        "rtmr1": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr1_$(date +%s)")"'",
+        "rtmr2": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr2_$(date +%s)")"'",
+        "rtmr3": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_rtmr3_$(date +%s)")"'",
+        "report_data": "'"$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")"'"
     },
-    "quote_signature": "$(openssl rand -hex 384 2>/dev/null || echo "mock_signature_$(date +%s)")",
+    "quote_signature": "'"$(openssl rand -hex 384 2>/dev/null || echo "mock_signature_$(date +%s)")"'",
     "metadata": {
         "generated_by": "tdx-mock-attestation.sh",
         "version": "1.0.0",
@@ -222,9 +214,7 @@ generate_mock_quote() {
         "purpose": "testing_and_development",
         "warning": "This is mock data for testing purposes only"
     }
-}
-EOF
-)
+}'
     
     # Save as JSON
     if command -v jq &> /dev/null; then
@@ -291,29 +281,34 @@ generate_mock_report() {
     log_info "Generating comprehensive mock attestation report..."
     
     local report_data
-    report_data=$(cat << EOF
-{
+    local evidence_exists=$(test -f "${MOCK_EVIDENCE}" && echo "true" || echo "false")
+    local token_exists=$(test -f "${MOCK_TOKEN}" && echo "true" || echo "false")
+    local quote_exists=$(test -f "${MOCK_QUOTE}" && echo "true" || echo "false")
+    local evidence_size=$(stat -c%s "${MOCK_EVIDENCE}" 2>/dev/null || echo "0")
+    local token_size=$(stat -c%s "${MOCK_TOKEN}" 2>/dev/null || echo "0")
+    local quote_size=$(stat -c%s "${MOCK_QUOTE}" 2>/dev/null || echo "0")
+    
+    report_data='{
     "report_type": "mock_tdx_attestation",
-    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
     "system_info": {
-        "hostname": "$(hostname)",
-        "kernel": "$(uname -r)",
-        "architecture": "$(uname -m)",
+        "hostname": "'"$(hostname)"'",
+        "kernel": "'"$(uname -r)"'",
+        "architecture": "'"$(uname -m)"'",
         "mock_environment": true
     },
     "mock_attestation_results": {
-        "evidence_generated": $(test -f "${MOCK_EVIDENCE}" && echo "true" || echo "false"),
-        "token_generated": $(test -f "${MOCK_TOKEN}" && echo "true" || echo "false"),
-        "quote_generated": $(test -f "${MOCK_QUOTE}" && echo "true" || echo "false"),
-        "evidence_file": "${MOCK_EVIDENCE}",
-        "token_file": "${MOCK_TOKEN}",
-        "quote_file": "${MOCK_QUOTE}"
+        "evidence_generated": '"${evidence_exists}"',
+        "token_generated": '"${token_exists}"',
+        "quote_generated": '"${quote_exists}"',
+        "evidence_file": "'"${MOCK_EVIDENCE}"'",
+        "token_file": "'"${MOCK_TOKEN}"'",
+        "quote_file": "'"${MOCK_QUOTE}"'"
     },
-    "verification_results": $(verify_mock_attestation),
     "mock_data_summary": {
-        "evidence_size": $(stat -c%s "${MOCK_EVIDENCE}" 2>/dev/null || echo "0"),
-        "token_size": $(stat -c%s "${MOCK_TOKEN}" 2>/dev/null || echo "0"),
-        "quote_size": $(stat -c%s "${MOCK_QUOTE}" 2>/dev/null || echo "0")
+        "evidence_size": '"${evidence_size}"',
+        "token_size": '"${token_size}"',
+        "quote_size": '"${quote_size}"'
     },
     "usage_instructions": {
         "purpose": "This mock attestation is for testing and development purposes only",
@@ -329,9 +324,7 @@ generate_mock_report() {
         ]
     },
     "disclaimer": "This is mock data generated for testing and development purposes. It should not be used in production environments or for real attestation verification."
-}
-EOF
-)
+}'
     
     if command -v jq &> /dev/null; then
         echo "${report_data}" | jq '.' > "${MOCK_REPORT}" 2>/dev/null || echo "${report_data}" > "${MOCK_REPORT}"
