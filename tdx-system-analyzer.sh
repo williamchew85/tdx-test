@@ -247,8 +247,8 @@ generate_analysis_report() {
     },
     "system_overview": {
         "os": "$(lsb_release -d 2>/dev/null | cut -d':' -f2 | xargs || echo 'Unknown')",
-        "uptime": "$(uptime -p)",
-        "boot_time": "$(uptime -s)"
+        "uptime": "$(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4- 2>/dev/null || echo 'unknown')",
+        "boot_time": "$(uptime -s 2>/dev/null || date -r $(sysctl -n kern.boottime | cut -d',' -f1 | cut -d' ' -f4) 2>/dev/null || echo 'unknown')"
     },
     "cpu_analysis": $(analyze_cpu_capabilities),
     "kernel_modules": $(analyze_kernel_modules),

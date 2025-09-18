@@ -1,0 +1,41 @@
+{
+    "report_type": "mock_tdx_attestation",
+    "timestamp": "2025-09-18T08:07:10Z",
+    "system_info": {
+        "hostname": "Williams-MacBook-Pro.local",
+        "kernel": "24.5.0",
+        "architecture": "arm64",
+        "mock_environment": true
+    },
+    "mock_attestation_results": {
+        "evidence_generated": true,
+        "token_generated": true,
+        "quote_generated": true,
+        "evidence_file": "/Users/williamchew/Workspace/projects/git/tdx-test/json/tdx-mock-evidence.json",
+        "token_file": "/Users/williamchew/Workspace/projects/git/tdx-test/json/tdx-mock-token.json",
+        "quote_file": "/Users/williamchew/Workspace/projects/git/tdx-test/json/tdx-mock-quote.bin"
+    },
+    "verification_results": 2025-09-18 16:07:10 [INFO] [0;34mVerifying mock attestation...[0m
+2025-09-18 16:07:10 [SUCCESS] [0;32mMock evidence is valid[0m
+2025-09-18 16:07:10 [SUCCESS] [0;32mMock token is valid[0m
+{"evidence_valid": true, "token_valid": true, "quote_valid": false, "timestamp": "2025-09-18T08:07:10Z"},
+    "mock_data_summary": {
+        "evidence_size": 0,
+        "token_size": 0,
+        "quote_size": 0
+    },
+    "usage_instructions": {
+        "purpose": "This mock attestation is for testing and development purposes only",
+        "limitations": [
+            "Mock data should not be used in production environments",
+            "No real cryptographic verification is performed",
+            "All generated data is for demonstration purposes only"
+        ],
+        "integration": [
+            "Use mock evidence for testing attestation verification logic",
+            "Use mock tokens for testing JWT parsing and validation",
+            "Use mock quotes for testing quote parsing and analysis"
+        ]
+    },
+    "disclaimer": "This is mock data generated for testing and development purposes. It should not be used in production environments or for real attestation verification."
+}

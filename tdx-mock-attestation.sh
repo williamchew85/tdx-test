@@ -55,7 +55,8 @@ log_error() {
 generate_mock_evidence() {
     log_info "Generating mock TDX evidence..."
     
-    local mock_evidence=$(cat << EOF
+    local mock_evidence
+    mock_evidence=$(cat << EOF
 {
     "evidence": {
         "version": "1.0",
@@ -100,8 +101,8 @@ generate_mock_evidence() {
             "hostname": "$(hostname)",
             "kernel": "$(uname -r)",
             "architecture": "$(uname -m)",
-            "bootTime": "$(uptime -s)",
-            "uptime": "$(uptime -p)"
+            "bootTime": "$(uptime -s 2>/dev/null || date -r $(sysctl -n kern.boottime | cut -d',' -f1 | cut -d' ' -f4) 2>/dev/null || echo 'unknown')",
+            "uptime": "$(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4- 2>/dev/null || echo 'unknown')"
         }
     },
     "metadata": {
@@ -115,7 +116,11 @@ generate_mock_evidence() {
 EOF
 )
     
-    echo "${mock_evidence}" | jq '.' > "${MOCK_EVIDENCE}" 2>/dev/null || echo "${mock_evidence}" > "${MOCK_EVIDENCE}"
+    if command -v jq &> /dev/null; then
+        echo "${mock_evidence}" | jq '.' > "${MOCK_EVIDENCE}" 2>/dev/null || echo "${mock_evidence}" > "${MOCK_EVIDENCE}"
+    else
+        echo "${mock_evidence}" > "${MOCK_EVIDENCE}"
+    fi
     log_success "Mock TDX evidence generated: ${MOCK_EVIDENCE}"
 }
 
@@ -153,7 +158,8 @@ EOF
     local signature=$(openssl rand -hex 256 2>/dev/null || echo "mock_signature_$(date +%s)")
     local mock_token="${header}.${payload}.${signature}"
     
-    local token_response=$(cat << EOF
+    local token_response
+    token_response=$(cat << EOF
 {
     "token": "${mock_token}",
     "token_type": "Bearer",
@@ -170,7 +176,11 @@ EOF
 EOF
 )
     
-    echo "${token_response}" | jq '.' > "${MOCK_TOKEN}" 2>/dev/null || echo "${token_response}" > "${MOCK_TOKEN}"
+    if command -v jq &> /dev/null; then
+        echo "${token_response}" | jq '.' > "${MOCK_TOKEN}" 2>/dev/null || echo "${token_response}" > "${MOCK_TOKEN}"
+    else
+        echo "${token_response}" > "${MOCK_TOKEN}"
+    fi
     log_success "Mock attestation token generated: ${MOCK_TOKEN}"
 }
 
@@ -179,7 +189,8 @@ generate_mock_quote() {
     log_info "Generating mock TDX quote..."
     
     # Create a realistic TDX quote structure
-    local mock_quote=$(cat << EOF
+    local mock_quote
+    mock_quote=$(cat << EOF
 {
     "quote_header": {
         "version": 1,
@@ -216,7 +227,11 @@ EOF
 )
     
     # Save as JSON
-    echo "${mock_quote}" | jq '.' > "${MOCK_QUOTE}.json" 2>/dev/null || echo "${mock_quote}" > "${MOCK_QUOTE}.json"
+    if command -v jq &> /dev/null; then
+        echo "${mock_quote}" | jq '.' > "${MOCK_QUOTE}.json" 2>/dev/null || echo "${mock_quote}" > "${MOCK_QUOTE}.json"
+    else
+        echo "${mock_quote}" > "${MOCK_QUOTE}.json"
+    fi
     
     # Create binary representation
     echo "${mock_quote}" | base64 > "${MOCK_QUOTE}" 2>/dev/null || {
@@ -275,7 +290,8 @@ verify_mock_attestation() {
 generate_mock_report() {
     log_info "Generating comprehensive mock attestation report..."
     
-    local report_data=$(cat << EOF
+    local report_data
+    report_data=$(cat << EOF
 {
     "report_type": "mock_tdx_attestation",
     "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
@@ -317,7 +333,11 @@ generate_mock_report() {
 EOF
 )
     
-    echo "${report_data}" | jq '.' > "${MOCK_REPORT}" 2>/dev/null || echo "${report_data}" > "${MOCK_REPORT}"
+    if command -v jq &> /dev/null; then
+        echo "${report_data}" | jq '.' > "${MOCK_REPORT}" 2>/dev/null || echo "${report_data}" > "${MOCK_REPORT}"
+    else
+        echo "${report_data}" > "${MOCK_REPORT}"
+    fi
     log_success "Mock attestation report generated: ${MOCK_REPORT}"
 }
 

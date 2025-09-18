@@ -1,0 +1,55 @@
+{
+  "evidence": {
+    "version": "1.0",
+    "type": "TDX_EVIDENCE",
+    "timestamp": "2025-09-18T08:07:09Z",
+    "quote": "81e59db751e944e75b55505ee2c439cd7a196cd2581e5d32a6f21293e67e44c7ce5699694f0720b0346bb8217d0726e799f15d698b23ac992bc3eaa935dc08509e607e4f9656ba795754bde37e8e04e756231441378aee4f83a58faae75bfd4af2c011263e45b56030c2552daccb390ddb4abe0aa4302613433cd8339b80c68339632c798df1fbc90af560426ad0626b4c39b119511151d0c1a398469cbd79b2fb75e72731be6d59ab736267b177e0ede7621b88bfad2ee53846766b98a226918348087ddf0437afacf3024907fefee8fbf9a21b16a648753a8bd49be24c7679adac81a15966eb20fb14cde3db7d91b57c5ee18a387b922de5aa5277ba44add5aca8a36376b5092cb0e0ca53db32f978ad4d05f72d5d6ca62acf27cb81a95a48c1ca3c5c83dd2a5e3f153f7f213a858a9ae22ee30d5658b33c2314f1beda67ea231910432937b016a4d918602b08ce13114bd7ff16ae84bd605ebb040114794d15282887c8f2045f7c73c19265d9101d9fbe5cee578d2425044f148158e6ee6ec29441cd906cea7187505e5dee3413083fb0e0dc5301a8c2451b13e249b642d24c8d0cb2ce25bdd3dd1eba3b96e024c6b00ae39679a97e2df3606b66ffe9514a5ec1e8e2b3e31ea4471bc1f61c399269da14cdb2cd620a0cee53a9420dad67f72594d956c16ba79fec92a8186ad6fe5da4c9555c703615a4364f4dcd9c5c0fe7df40f6e7abe8b3e4a1e2e6a193a1cf92ed41c9da240d5257e8bfc1db131dca16e308f75a4bf942b661518f80023848d47e825d1537482e2cb1fc8a6691bec6283b19a3003dce8d6ebb12185c30fbb1f9b0fa4444b9de83c8cf0fb0ca672ec6355326e80a25c872d7accf98200cfeeb8653cdc132a0fda2410363faf8a7c368de2e8ae4e994ceb6f846d4e663c1b54d900f7fdcc7aeb50c3d5a5105faaab733d68ba73a5bdc2a82e66f491d2064fae5aa6cb0899f414cdb9005d69857296b1d9de5e470c7b3ece3ae18c19a32bef25ab89b2c68569c3a30336817d1c2cebde2c9f7cf2bce0b10591ccbca8833b69861fcdbef78aa69c80ba1c523b81bd23dfc998282cf14b01a36b503563addbb42b8d15684917b7da0f8d5d9e9c9a396b061fc3d0d8b8b8516d05850f8a148da975ef66b6b86afea883ae0ec2bfe63246aa3d7d09334b56369a0fbce27e62f90f4d7cd70f1da1dcb99eb3404f01eb9addef8f290d7e32c06ea64adaa01869fb73e04d8605c96d198323b7d3cf2d440b372858f00dd0b390df988a523133fdccec26a538d9e6a3702fd9abb8a5ded1db2225008cc6cc0c161f416d57af6fb44ebf8655ba621933625480c2407cb757db278809941e023307069a7ff4b2fbd768e32cfb06ff234785344e46c7949d0775a17dfca45d1027d10b8be8207a0234de8f74eeb8c720ea9aefb8b0c5b5509308076abda",
+    "reportData": "8f49e268ce3f109fa08cdc82fe2b1a109fc024fe304f1ed9b0cba71a9185d86a5c3c5624b0caeae080511cd084ff7118e21321c271040402c29415a1ba569a92",
+    "tdxModule": {
+      "mrsigner": "234751bcd8e625f5796743019251fa171b385aa4ed34d1a461f161ff1e4187a8",
+      "attributes": "e2fb665967d6712b8423d769cc716a10",
+      "attributesMask": "461ab568890aff568d833f3a1e35e3ac",
+      "mrtd": "b3c8b3eb667c0c0b4fae4210cc5bef60ee18a0c55f72863df3f0579500143b4e",
+      "mrconfig_id": "be2d08ee3dd9645763df117ef04dff318fa7e9abe5d0bd0728f1655cae30bde8",
+      "mrowner": "9bf3c4f3146c3c7666309af514fb3a66ef7ba03893aeda8d99753a7e600193f6",
+      "mrownerconfig": "da8e80781ac2b38e53c77d391a29e609d686c49871ae5590e7bf5bc81621988c",
+      "rtmr0": "f81dec413815fbaed764b6b6bd14b1f251bb7b15528914a1b484448d347d6e1b",
+      "rtmr1": "25f5fe8bd7ad3c1e991872048b517e6a5a399dcc8241cef921c3d54cdd86dea5",
+      "rtmr2": "5732639a90303bfc561ebd533dc8acfd7525155c0cb30e19b1563b6365574b12",
+      "rtmr3": "7b054669bd3e8113e4d44ae450b640c0e183b233cbbf80a05884c490cd881c03"
+    },
+    "tdxTcbInfo": {
+      "tcbType": "TDX_TCB",
+      "tcbSvn": "86a675dd20941087b534129cde7697ca",
+      "pceSvn": "e24eee9b",
+      "pceId": "14012a85",
+      "fmspc": "c7d52d741937",
+      "tdxTcbComponents": [
+        {
+          "svn": "eda5",
+          "category": "TDX_TEE_TCB",
+          "type": "TDX_TEE_TCB_COMPONENT"
+        },
+        {
+          "svn": "888b",
+          "category": "TDX_TEE_TCB",
+          "type": "TDX_TEE_TCB_COMPONENT"
+        }
+      ]
+    },
+    "systemInfo": {
+      "hostname": "Williams-MacBook-Pro.local",
+      "kernel": "24.5.0",
+      "architecture": "arm64",
+      "bootTime": "",
+      "uptime": ""
+    }
+  },
+  "metadata": {
+    "generated_by": "tdx-mock-attestation.sh",
+    "version": "1.0.0",
+    "is_mock": true,
+    "purpose": "testing_and_development",
+    "warning": "This is mock data for testing purposes only"
+  }
+}

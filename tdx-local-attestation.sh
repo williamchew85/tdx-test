@@ -126,8 +126,8 @@ collect_system_measurements() {
         "hostname": "$(hostname)",
         "kernel": "$(uname -r)",
         "architecture": "$(uname -m)",
-        "boot_time": "$(uptime -s)",
-        "uptime": "$(uptime -p)"
+        "boot_time": "$(uptime -s 2>/dev/null || date -r $(sysctl -n kern.boottime | cut -d',' -f1 | cut -d' ' -f4) 2>/dev/null || echo 'unknown')",
+        "uptime": "$(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4- 2>/dev/null || echo 'unknown')"
     },
     "hardware_info": {
         "cpu_model": "$(lscpu | grep 'Model name' | cut -d':' -f2 | xargs)",
