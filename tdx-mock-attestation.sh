@@ -126,20 +126,19 @@ generate_mock_token() {
     
     # Create a mock JWT-like token structure
     local header=$(echo -n '{"alg":"RS256","typ":"JWT","kid":"mock-tdx-key"}' | base64 -w 0 2>/dev/null || echo -n '{"alg":"RS256","typ":"JWT","kid":"mock-tdx-key"}' | base64)
-    local payload=$(cat << EOF | jq -c . | base64 -w 0 2>/dev/null || cat << EOF | jq -c . | base64
-{
+    local payload_data='{
     "iss": "https://mock.trustauthority.intel.com",
     "sub": "tdx-attestation",
     "aud": "tdx-verification-service",
-    "exp": $(($(date +%s) + 3600)),
-    "iat": $(date +%s),
-    "jti": "$(openssl rand -hex 16 2>/dev/null || echo "mock_jti_$(date +%s)")",
+    "exp": '"$(($(date +%s) + 3600))"',
+    "iat": '"$(date +%s)"',
+    "jti": "'"$(openssl rand -hex 16 2>/dev/null || echo "mock_jti_$(date +%s)")"'",
     "tdx_claims": {
         "tdx_enabled": true,
         "tdx_version": "1.0",
-        "measurement": "$(openssl rand -hex 32 2>/dev/null || echo "mock_measurement_$(date +%s)")",
-        "mrtd": "$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")",
-        "report_data": "$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")",
+        "measurement": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_measurement_$(date +%s)")"'",
+        "mrtd": "'"$(openssl rand -hex 32 2>/dev/null || echo "mock_mrtd_$(date +%s)")"'",
+        "report_data": "'"$(openssl rand -hex 64 2>/dev/null || echo "mock_report_data_$(date +%s)")"'",
         "tdx_module_loaded": true,
         "memory_encryption_active": true,
         "secure_boot_enabled": true
@@ -147,9 +146,14 @@ generate_mock_token() {
     "verification_status": "VERIFIED",
     "trust_level": "HIGH",
     "attestation_type": "TDX_LOCAL_MOCK"
-}
-EOF
-)
+}'
+    
+    local payload
+    if command -v jq &> /dev/null; then
+        payload=$(echo "${payload_data}" | jq -c . | base64 -w 0 2>/dev/null || echo "${payload_data}" | base64)
+    else
+        payload=$(echo "${payload_data}" | base64)
+    fi
     
     local signature=$(openssl rand -hex 256 2>/dev/null || echo "mock_signature_$(date +%s)")
     local mock_token="${header}.${payload}.${signature}"
