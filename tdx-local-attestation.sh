@@ -267,37 +267,53 @@ EOF
 
 # Verify local evidence
 verify_local_evidence() {
-    log_info "Verifying local evidence..."
+    local quiet_mode="${1:-false}"
+    
+    if [[ "${quiet_mode}" != "true" ]]; then
+        log_info "Verifying local evidence..."
+    fi
     
     local verification_result=""
     local is_valid=false
     
     if [[ -f "${EVIDENCE_FILE}" ]]; then
         if jq empty "${EVIDENCE_FILE}" 2>/dev/null; then
-            log_success "Evidence file is valid JSON"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_success "Evidence file is valid JSON"
+            fi
             
             # Check for required fields
             local has_tdx_status=$(jq -e '.tdx_status' "${EVIDENCE_FILE}" > /dev/null 2>&1 && echo "true" || echo "false")
             local has_measurements=$(jq -e '.system_measurements' "${EVIDENCE_FILE}" > /dev/null 2>&1 && echo "true" || echo "false")
             
             if [[ "${has_tdx_status}" == "true" && "${has_measurements}" == "true" ]]; then
-                log_success "Evidence structure is valid"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    log_success "Evidence structure is valid"
+                fi
                 is_valid=true
                 
-                # Display evidence summary
-                local tdx_available=$(jq -r '.tdx_status.available' "${EVIDENCE_FILE}" 2>/dev/null || echo "unknown")
-                local detection_methods=$(jq -r '.tdx_status.detection_methods | join(", ")' "${EVIDENCE_FILE}" 2>/dev/null || echo "unknown")
-                
-                log_info "TDX Available: ${tdx_available}"
-                log_info "Detection Methods: ${detection_methods}"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    # Display evidence summary
+                    local tdx_available=$(jq -r '.tdx_status.available' "${EVIDENCE_FILE}" 2>/dev/null || echo "unknown")
+                    local detection_methods=$(jq -r '.tdx_status.detection_methods | join(", ")' "${EVIDENCE_FILE}" 2>/dev/null || echo "unknown")
+                    
+                    log_info "TDX Available: ${tdx_available}"
+                    log_info "Detection Methods: ${detection_methods}"
+                fi
             else
-                log_error "Evidence structure is invalid - missing required fields"
+                if [[ "${quiet_mode}" != "true" ]]; then
+                    log_error "Evidence structure is invalid - missing required fields"
+                fi
             fi
         else
-            log_error "Evidence file is not valid JSON"
+            if [[ "${quiet_mode}" != "true" ]]; then
+                log_error "Evidence file is not valid JSON"
+            fi
         fi
     else
-        log_error "Evidence file not found"
+        if [[ "${quiet_mode}" != "true" ]]; then
+            log_error "Evidence file not found"
+        fi
     fi
     
     verification_result="{\"file\": \"${EVIDENCE_FILE}\", \"valid\": ${is_valid}, \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
@@ -326,7 +342,7 @@ generate_report() {
         "quote_file": "${QUOTE_FILE}",
         "measurements_file": "${MEASUREMENT_FILE}"
     },
-    "verification_results": $(verify_local_evidence),
+    "verification_results": $(verify_local_evidence "true"),
     "tdx_capabilities": {
         "dmesg_entries": $(dmesg | grep -i tdx | wc -l),
         "cpu_flags": $(grep -i tdx /proc/cpuinfo | wc -l),
