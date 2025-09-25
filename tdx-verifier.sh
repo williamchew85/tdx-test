@@ -418,6 +418,90 @@ EOF
     # Display summary
     log_info "=== Verification Summary ==="
     echo "${report}" | jq -r '.summary | "Total files: \(.total_files), Valid: \(.valid_files), Invalid: \(.invalid_files)"'
+    
+    # Display detailed conclusions
+    display_conclusions "${report}"
+}
+
+# Display detailed conclusions and recommendations
+display_conclusions() {
+    local report="$1"
+    local total_files=$(echo "${report}" | jq -r '.summary.total_files')
+    local valid_files=$(echo "${report}" | jq -r '.summary.valid_files')
+    local invalid_files=$(echo "${report}" | jq -r '.summary.invalid_files')
+    
+    echo
+    log_info "=== TDX Attestation Analysis ==="
+    
+    # Check for local evidence files
+    local has_local_evidence=$(echo "${report}" | jq -r '.verification_results[] | select(.file | contains("local")) | .file' | wc -l)
+    local has_mock_files=$(echo "${report}" | jq -r '.verification_results[] | select(.file | contains("mock")) | .file' | wc -l)
+    
+    if [[ ${has_local_evidence} -gt 0 ]]; then
+        log_info "🔍 Local TDX Evidence Detected:"
+        echo "   • Your system has TDX capabilities and is running in a TDX environment"
+        echo "   • Local evidence shows TDX is active and working"
+        echo "   • This is good for local verification but not for remote attestation"
+    fi
+    
+    if [[ ${has_mock_files} -gt 0 ]]; then
+        log_info "🧪 Mock Attestation Files Found:"
+        echo "   • These are test files for development and demonstration"
+        echo "   • They follow the standard Intel Trust Authority format"
+        echo "   • Use these for testing attestation workflows"
+    fi
+    
+    echo
+    log_info "=== Attestation Status ==="
+    
+    if [[ ${valid_files} -eq ${total_files} ]]; then
+        log_success "✅ ALL FILES VALID - Attestation is working correctly!"
+        echo "   • All evidence, tokens, and quotes are properly formatted"
+        echo "   • Your TDX attestation setup is ready for production use"
+    elif [[ ${valid_files} -gt 0 ]]; then
+        log_warning "⚠️  PARTIAL SUCCESS - Some files are valid, others need attention"
+        echo "   • ${valid_files}/${total_files} files passed verification"
+        echo "   • Check invalid files for format issues or missing data"
+        
+        # Show which files are invalid
+        echo "   • Invalid files:"
+        echo "${report}" | jq -r '.verification_results[] | select(.valid == false) | "     - \(.file)"'
+    else
+        log_error "❌ ALL FILES INVALID - Attestation setup needs attention"
+        echo "   • No files passed verification"
+        echo "   • Check your TDX setup and file generation process"
+    fi
+    
+    echo
+    log_info "=== Recommendations ==="
+    
+    if [[ ${has_local_evidence} -gt 0 && ${has_mock_files} -gt 0 ]]; then
+        echo "📋 You have both local and mock attestation files:"
+        echo "   • Use local evidence for system analysis and TDX verification"
+        echo "   • Use mock files for testing attestation workflows"
+        echo "   • For production, you'll need real Intel Trust Authority integration"
+    elif [[ ${has_local_evidence} -gt 0 ]]; then
+        echo "📋 You have local TDX evidence:"
+        echo "   • Your system is TDX-capable and working"
+        echo "   • For remote attestation, integrate with Intel Trust Authority"
+        echo "   • Consider using mock files for testing workflows"
+    elif [[ ${has_mock_files} -gt 0 ]]; then
+        echo "📋 You have mock attestation files:"
+        echo "   • Good for testing and development"
+        echo "   • Run local attestation to generate real TDX evidence"
+        echo "   • Use these to test your attestation integration"
+    else
+        echo "📋 No attestation files found:"
+        echo "   • Run the local attestation script: sudo ./tdx-local-attestation.sh"
+        echo "   • Or generate mock files: sudo ./tdx-mock-attestation.sh"
+    fi
+    
+    echo
+    log_info "=== Next Steps ==="
+    echo "1. Review the verification report: cat json/tdx-verification-report.json"
+    echo "2. Check detailed logs: cat log/tdx-verifier.log"
+    echo "3. For production use, integrate with Intel Trust Authority API"
+    echo "4. Test your attestation workflow with the valid files"
 }
 
 # Main execution
