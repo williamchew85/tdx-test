@@ -183,7 +183,9 @@ done | sed '$ s/,$//')
         "cpu_flags": [
 $(echo "${tdx_cpuinfo}" | while read line; do
     if [[ -n "${line}" ]]; then
-        echo "            \"${line}\","
+        # Escape control characters and quotes in the line
+        escaped_line=$(echo "${line}" | sed 's/\\/\\\\/g; s/"/\\"/g; s/\t/\\t/g; s/\r/\\r/g; s/\n/\\n/g')
+        echo "            \"${escaped_line}\","
     fi
 done | sed '$ s/,$//')
         ],
