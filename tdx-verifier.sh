@@ -98,12 +98,15 @@ verify_evidence() {
     
     if [[ "${quiet_mode}" == "true" ]]; then
         log_info_quiet "Verifying TDX evidence file: ${evidence_file}"
+    elif [[ "${quiet_mode}" == "json-only" ]]; then
+        # In json-only mode, don't log anything to stdout
+        log_info_quiet "Verifying TDX evidence file: ${evidence_file}"
     else
         log_info "Verifying TDX evidence file: ${evidence_file}"
     fi
     
     if [[ ! -f "${evidence_file}" ]]; then
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_error_quiet "Evidence file not found: ${evidence_file}"
         else
             log_error "Evidence file not found: ${evidence_file}"
@@ -116,7 +119,7 @@ verify_evidence() {
     
     # Check if file is valid JSON
     if jq empty "${evidence_file}" 2>/dev/null; then
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_success_quiet "Evidence file is valid JSON"
         else
             log_success "Evidence file is valid JSON"
@@ -128,7 +131,7 @@ verify_evidence() {
         local has_report_data=$(jq -e '.evidence.reportData' "${evidence_file}" > /dev/null 2>&1 && echo "true" || echo "false")
         
         if [[ "${has_evidence}" == "true" ]]; then
-            if [[ "${quiet_mode}" == "true" ]]; then
+            if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
                 log_success_quiet "Evidence structure is valid"
             else
                 log_success "Evidence structure is valid"
@@ -136,7 +139,7 @@ verify_evidence() {
             is_valid=true
             
             # Extract and display key information
-            if [[ "${quiet_mode}" != "true" ]]; then
+            if [[ "${quiet_mode}" != "true" && "${quiet_mode}" != "json-only" ]]; then
                 local evidence_size=$(jq -r '.evidence | keys | length' "${evidence_file}")
                 log_info "Evidence contains ${evidence_size} fields"
                 
@@ -151,14 +154,14 @@ verify_evidence() {
                 fi
             fi
         else
-            if [[ "${quiet_mode}" == "true" ]]; then
+            if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
                 log_error_quiet "Evidence structure is invalid - missing 'evidence' field"
             else
                 log_error "Evidence structure is invalid - missing 'evidence' field"
             fi
         fi
     else
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_error_quiet "Evidence file is not valid JSON"
         else
             log_error "Evidence file is not valid JSON"
@@ -174,14 +177,14 @@ verify_token() {
     local token_file="$1"
     local quiet_mode="${2:-false}"
     
-    if [[ "${quiet_mode}" == "true" ]]; then
+    if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
         log_info_quiet "Verifying attestation token file: ${token_file}"
     else
         log_info "Verifying attestation token file: ${token_file}"
     fi
     
     if [[ ! -f "${token_file}" ]]; then
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_error_quiet "Token file not found: ${token_file}"
         else
             log_error "Token file not found: ${token_file}"
@@ -194,7 +197,7 @@ verify_token() {
     
     # Check if file is valid JSON
     if jq empty "${token_file}" 2>/dev/null; then
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_success_quiet "Token file is valid JSON"
         else
             log_success "Token file is valid JSON"
@@ -207,14 +210,14 @@ verify_token() {
             local token_value=$(jq -r '.token' "${token_file}")
             
             if [[ -n "${token_value}" && "${token_value}" != "null" ]]; then
-                if [[ "${quiet_mode}" == "true" ]]; then
+                if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
                     log_success_quiet "Token is present and non-empty"
                 else
                     log_success "Token is present and non-empty"
                 fi
                 is_valid=true
                 
-                if [[ "${quiet_mode}" != "true" ]]; then
+                if [[ "${quiet_mode}" != "true" && "${quiet_mode}" != "json-only" ]]; then
                     # Basic token format validation (JWT-like structure)
                     local token_parts=$(echo "${token_value}" | tr '.' '\n' | wc -l)
                     if [[ ${token_parts} -eq 3 ]]; then
@@ -228,21 +231,21 @@ verify_token() {
                     log_info "Token preview: ${token_preview}..."
                 fi
             else
-                if [[ "${quiet_mode}" == "true" ]]; then
+                if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
                     log_error_quiet "Token is empty or null"
                 else
                     log_error "Token is empty or null"
                 fi
             fi
         else
-            if [[ "${quiet_mode}" == "true" ]]; then
+            if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
                 log_error_quiet "Token structure is invalid - missing 'token' field"
             else
                 log_error "Token structure is invalid - missing 'token' field"
             fi
         fi
     else
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_error_quiet "Token file is not valid JSON"
         else
             log_error "Token file is not valid JSON"
@@ -258,14 +261,14 @@ verify_quote() {
     local quote_file="$1"
     local quiet_mode="${2:-false}"
     
-    if [[ "${quiet_mode}" == "true" ]]; then
+    if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
         log_info_quiet "Verifying TDX quote file: ${quote_file}"
     else
         log_info "Verifying TDX quote file: ${quote_file}"
     fi
     
     if [[ ! -f "${quote_file}" ]]; then
-        if [[ "${quiet_mode}" == "true" ]]; then
+        if [[ "${quiet_mode}" == "true" || "${quiet_mode}" == "json-only" ]]; then
             log_error_quiet "Quote file not found: ${quote_file}"
         else
             log_error "Quote file not found: ${quote_file}"
@@ -277,7 +280,14 @@ verify_quote() {
     local is_valid=false
     
     # Check file size (TDX quotes are typically several KB)
-    local file_size=$(stat -c%s "${quote_file}")
+    local file_size
+    if command -v stat >/dev/null 2>&1; then
+        # Try Linux stat first, then macOS stat
+        file_size=$(stat -c%s "${quote_file}" 2>/dev/null || stat -f%z "${quote_file}" 2>/dev/null || echo "0")
+    else
+        file_size="0"
+    fi
+    
     if [[ "${quiet_mode}" != "true" ]]; then
         log_info "Quote file size: ${file_size} bytes"
     fi
@@ -461,17 +471,23 @@ main() {
         local verification_results="[]"
         
         if [[ -n "${evidence_file}" ]]; then
-            local result=$(verify_evidence "${evidence_file}")
+            # Call verification function and capture only the JSON result
+            verify_evidence "${evidence_file}"
+            local result=$(verify_evidence "${evidence_file}" "json-only")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
         fi
         
         if [[ -n "${token_file}" ]]; then
-            local result=$(verify_token "${token_file}")
+            # Call verification function and capture only the JSON result
+            verify_token "${token_file}"
+            local result=$(verify_token "${token_file}" "json-only")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
         fi
         
         if [[ -n "${quote_file}" ]]; then
-            local result=$(verify_quote "${quote_file}")
+            # Call verification function and capture only the JSON result
+            verify_quote "${quote_file}"
+            local result=$(verify_quote "${quote_file}" "json-only")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
         fi
         
