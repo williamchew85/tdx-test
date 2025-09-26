@@ -101,8 +101,10 @@ verify_all() {
         if [[ -f "${evidence_file}" ]]; then
             log_info "Found evidence file: ${evidence_file}"
             local result=$(verify_file "${evidence_file}" "json")
-            verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
-            ((files_found++))
+            if [[ -n "${result}" ]]; then
+                verification_results=$(echo "${verification_results}" | jq ". + [${result}]" 2>/dev/null || echo "${verification_results}")
+                ((files_found++))
+            fi
         fi
     done
     
@@ -116,8 +118,10 @@ verify_all() {
         if [[ -f "${token_file}" ]]; then
             log_info "Found token file: ${token_file}"
             local result=$(verify_file "${token_file}" "json")
-            verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
-            ((files_found++))
+            if [[ -n "${result}" ]]; then
+                verification_results=$(echo "${verification_results}" | jq ". + [${result}]" 2>/dev/null || echo "${verification_results}")
+                ((files_found++))
+            fi
         fi
     done
     
@@ -132,8 +136,10 @@ verify_all() {
         if [[ -f "${quote_file}" ]]; then
             log_info "Found quote file: ${quote_file}"
             local result=$(verify_file "${quote_file}" "binary")
-            verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
-            ((files_found++))
+            if [[ -n "${result}" ]]; then
+                verification_results=$(echo "${verification_results}" | jq ". + [${result}]" 2>/dev/null || echo "${verification_results}")
+                ((files_found++))
+            fi
         fi
     done
     
@@ -190,5 +196,8 @@ main() {
     log_info "Log file: ${LOG_FILE}"
 }
 
-# Run main function
-main "$@"
+# Run main function with timeout protection
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    # Only run main if this script is executed directly, not sourced
+    main "$@"
+fi
