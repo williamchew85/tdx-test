@@ -13,6 +13,9 @@ LOG_DIR="${SCRIPT_DIR}/log"
 # Create directories if they don't exist
 mkdir -p "${JSON_DIR}" "${LOG_DIR}"
 
+# Fix permissions for log directory
+chmod 755 "${LOG_DIR}" 2>/dev/null || true
+
 VERIFICATION_REPORT="${JSON_DIR}/tdx-verification-report.json"
 LOG_FILE="${LOG_DIR}/tdx-verifier.log"
 
@@ -23,13 +26,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Logging function
+# Logging function (with permission handling)
 log() {
     local level="$1"
     shift
     local message="$*"
     local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    echo -e "${timestamp} [${level}] ${message}" | tee -a "${LOG_FILE}"
+    echo -e "${timestamp} [${level}] ${message}" | tee -a "${LOG_FILE}" 2>/dev/null || echo -e "${timestamp} [${level}] ${message}"
 }
 
 log_info() {
@@ -170,10 +173,10 @@ EOF
 
 # Main execution
 main() {
-    # Initialize log file
-    echo "=== TDX Verifier Log ===" > "${LOG_FILE}"
-    echo "Started at: $(date)" >> "${LOG_FILE}"
-    echo >> "${LOG_FILE}"
+    # Initialize log file (with permission handling)
+    echo "=== TDX Verifier Log ===" > "${LOG_FILE}" 2>/dev/null || true
+    echo "Started at: $(date)" >> "${LOG_FILE}" 2>/dev/null || true
+    echo >> "${LOG_FILE}" 2>/dev/null || true
     
     log_info "Starting TDX Verification Process"
     
