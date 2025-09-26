@@ -549,9 +549,14 @@ display_test_summary() {
     echo
     
     local total_tests=${#test_results[@]}
-    local passed_tests=$(printf '%s\n' "${test_results[@]}" | grep -c "PASSED" || echo "0")
-    local failed_tests=$(printf '%s\n' "${test_results[@]}" | grep -c "FAILED" || echo "0")
-    local total_duration=$(printf '%s\n' "${test_durations[@]}" | awk '{sum+=$1} END {print sum+0}')
+    local passed_tests=$(printf '%s\n' "${test_results[@]}" | grep -c "PASSED" 2>/dev/null || echo "0")
+    local failed_tests=$(printf '%s\n' "${test_results[@]}" | grep -c "FAILED" 2>/dev/null || echo "0")
+    local total_duration=$(printf '%s\n' "${test_durations[@]}" | awk '{sum+=$1} END {print sum+0}' 2>/dev/null || echo "0")
+    
+    # Ensure variables are numeric
+    passed_tests=$((passed_tests + 0))
+    failed_tests=$((failed_tests + 0))
+    total_duration=$((total_duration + 0))
     
     log_info "Total Tests: ${total_tests}"
     log_success "Passed: ${passed_tests}"
