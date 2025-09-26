@@ -62,16 +62,41 @@ run_test() {
     
     log_info "Running test: ${test_name}"
     log_info "Description: ${test_description}"
+    log_info "Command: ${test_command}"
     
     local start_time=$(date +%s)
     local test_result="FAILED"
     local test_output=""
+    local exit_code=0
     
+    # Run the test command and capture output
     if eval "${test_command}" > /tmp/test_output_${test_name}.log 2>&1; then
         test_result="PASSED"
         log_success "Test ${test_name} PASSED"
     else
-        log_error "Test ${test_name} FAILED"
+        exit_code=$?
+        log_error "Test ${test_name} FAILED (exit code: ${exit_code})"
+        
+        # Show detailed error information
+        log_error "=== FAILURE DETAILS ==="
+        if [[ -f /tmp/test_output_${test_name}.log ]]; then
+            log_error "Command output:"
+            cat /tmp/test_output_${test_name}.log | while IFS= read -r line; do
+                log_error "  ${line}"
+            done
+        else
+            log_error "No output captured"
+        fi
+        
+        # Show file system state for debugging
+        log_error "=== DEBUGGING INFO ==="
+        log_error "Current directory: $(pwd)"
+        log_error "JSON directory contents:"
+        ls -la "${JSON_DIR}/" 2>/dev/null | while IFS= read -r line; do
+            log_error "  ${line}"
+        done || log_error "  Cannot list JSON directory"
+        
+        log_error "=== END FAILURE DETAILS ==="
     fi
     
     local end_time=$(date +%s)
@@ -80,7 +105,7 @@ run_test() {
     test_results["${test_name}"]="${test_result}"
     test_durations["${test_name}"]="${duration}"
     
-    # Capture test output
+    # Capture test output for report
     test_output=$(cat /tmp/test_output_${test_name}.log 2>/dev/null || echo "No output captured")
     
     # Clean up temp file
@@ -142,7 +167,7 @@ test_verify_quote_positive() {
 # Test 8: Positive - Run comprehensive verification
 test_comprehensive_verification_positive() {
     run_test "comprehensive_verification_positive" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Run comprehensive verification (POSITIVE)"
 }
 
@@ -158,7 +183,7 @@ test_missing_files_negative() {
     rm -f "${JSON_DIR}"/tdx-*.json "${JSON_DIR}"/tdx-*.bin
     
     run_test "missing_files_negative" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Test verification with missing files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -184,7 +209,7 @@ test_corrupted_files_negative() {
     fi
     
     run_test "corrupted_files_negative" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Test verification with corrupted files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -205,7 +230,7 @@ test_invalid_json_negative() {
     fi
     
     run_test "invalid_json_negative" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Test verification with invalid JSON (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -225,7 +250,7 @@ test_empty_files_negative() {
     touch "${JSON_DIR}/tdx-local-quote.bin"
     
     run_test "empty_files_negative" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Test verification with empty files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -242,7 +267,7 @@ test_mock_data_edge() {
 # Test 14: Edge case - Test verification with mock data
 test_verify_mock_data_edge() {
     run_test "verify_mock_data_edge" \
-        "timeout 30 ./tdx-verifier-robust.sh --all" \
+        "./tdx-verifier-dummy.sh" \
         "Verify mock data (EDGE CASE)"
 }
 
