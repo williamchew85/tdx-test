@@ -48,7 +48,7 @@ log_error() {
     log "ERROR" "${RED}$*${NC}"
 }
 
-# Simple file verification
+# Simple file verification (fixed to prevent hanging)
 verify_file() {
     local file_path="$1"
     local file_type="$2"
@@ -65,12 +65,12 @@ verify_file() {
         return 1
     fi
     
-    # For JSON files, check if they're valid JSON
+    # For JSON files, use timeout to prevent hanging
     if [[ "${file_type}" == "json" ]]; then
-        if jq empty "${file_path}" 2>/dev/null; then
+        if timeout 5 jq empty "${file_path}" 2>/dev/null; then
             echo "{\"file\": \"${file_path}\", \"valid\": true, \"size\": ${file_size}, \"type\": \"json\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
         else
-            echo "{\"file\": \"${file_path}\", \"valid\": false, \"error\": \"invalid_json\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+            echo "{\"file\": \"${file_path}\", \"valid\": false, \"error\": \"invalid_json_or_timeout\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
             return 1
         fi
     else
@@ -96,7 +96,7 @@ verify_all() {
     for evidence_file in "${evidence_files[@]}"; do
         if [[ -f "${evidence_file}" ]]; then
             log_info "Found evidence file: ${evidence_file}"
-            local result=$(verify_file "${evidence_file}" "json")
+            local result=$(timeout 10 verify_file "${evidence_file}" "json")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -111,7 +111,7 @@ verify_all() {
     for token_file in "${token_files[@]}"; do
         if [[ -f "${token_file}" ]]; then
             log_info "Found token file: ${token_file}"
-            local result=$(verify_file "${token_file}" "json")
+            local result=$(timeout 10 verify_file "${token_file}" "json")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -127,7 +127,7 @@ verify_all() {
     for quote_file in "${quote_files[@]}"; do
         if [[ -f "${quote_file}" ]]; then
             log_info "Found quote file: ${quote_file}"
-            local result=$(verify_file "${quote_file}" "binary")
+            local result=$(timeout 10 verify_file "${quote_file}" "binary")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
