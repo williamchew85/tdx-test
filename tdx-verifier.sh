@@ -13,8 +13,9 @@ LOG_DIR="${SCRIPT_DIR}/log"
 # Create directories if they don't exist
 mkdir -p "${JSON_DIR}" "${LOG_DIR}"
 
-# Fix permissions for log directory
+# Fix permissions for directories
 chmod 755 "${LOG_DIR}" 2>/dev/null || true
+chown -R $(whoami):$(whoami) "${LOG_DIR}" 2>/dev/null || true
 
 VERIFICATION_REPORT="${JSON_DIR}/tdx-verification-report.json"
 LOG_FILE="${LOG_DIR}/tdx-verifier.log"
@@ -99,7 +100,7 @@ verify_all() {
     for evidence_file in "${evidence_files[@]}"; do
         if [[ -f "${evidence_file}" ]]; then
             log_info "Found evidence file: ${evidence_file}"
-            local result=$(timeout 10 verify_file "${evidence_file}" "json")
+            local result=$(verify_file "${evidence_file}" "json")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -114,7 +115,7 @@ verify_all() {
     for token_file in "${token_files[@]}"; do
         if [[ -f "${token_file}" ]]; then
             log_info "Found token file: ${token_file}"
-            local result=$(timeout 10 verify_file "${token_file}" "json")
+            local result=$(verify_file "${token_file}" "json")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -130,7 +131,7 @@ verify_all() {
     for quote_file in "${quote_files[@]}"; do
         if [[ -f "${quote_file}" ]]; then
             log_info "Found quote file: ${quote_file}"
-            local result=$(timeout 10 verify_file "${quote_file}" "binary")
+            local result=$(verify_file "${quote_file}" "binary")
             verification_results=$(echo "${verification_results}" | jq ". + [${result}]")
             ((files_found++))
         fi
@@ -174,9 +175,11 @@ EOF
 # Main execution
 main() {
     # Initialize log file (with permission handling)
-    echo "=== TDX Verifier Log ===" > "${LOG_FILE}" 2>/dev/null || true
-    echo "Started at: $(date)" >> "${LOG_FILE}" 2>/dev/null || true
-    echo >> "${LOG_FILE}" 2>/dev/null || true
+    if touch "${LOG_FILE}" 2>/dev/null; then
+        echo "=== TDX Verifier Log ===" > "${LOG_FILE}"
+        echo "Started at: $(date)" >> "${LOG_FILE}"
+        echo >> "${LOG_FILE}"
+    fi
     
     log_info "Starting TDX Verification Process"
     
