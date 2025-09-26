@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Comprehensive TDX Attestation Testing Script
+# Comprehensive TDX Attestation Testing Script (CORRECTED VERSION)
 # Tests both positive and negative scenarios for TDX verification
+# Fixed the nested json directory issue
 
 set -euo pipefail
 
@@ -61,16 +62,41 @@ run_test() {
     
     log_info "Running test: ${test_name}"
     log_info "Description: ${test_description}"
+    log_info "Command: ${test_command}"
     
     local start_time=$(date +%s)
     local test_result="FAILED"
     local test_output=""
+    local exit_code=0
     
+    # Run the test command and capture output
     if eval "${test_command}" > /tmp/test_output_${test_name}.log 2>&1; then
         test_result="PASSED"
         log_success "Test ${test_name} PASSED"
     else
-        log_error "Test ${test_name} FAILED"
+        exit_code=$?
+        log_error "Test ${test_name} FAILED (exit code: ${exit_code})"
+        
+        # Show detailed error information
+        log_error "=== FAILURE DETAILS ==="
+        if [[ -f /tmp/test_output_${test_name}.log ]]; then
+            log_error "Command output:"
+            cat /tmp/test_output_${test_name}.log | while IFS= read -r line; do
+                log_error "  ${line}"
+            done
+        else
+            log_error "No output captured"
+        fi
+        
+        # Show file system state for debugging
+        log_error "=== DEBUGGING INFO ==="
+        log_error "Current directory: $(pwd)"
+        log_error "JSON directory contents:"
+        ls -la "${JSON_DIR}/" 2>/dev/null | while IFS= read -r line; do
+            log_error "  ${line}"
+        done || log_error "  Cannot list JSON directory"
+        
+        log_error "=== END FAILURE DETAILS ==="
     fi
     
     local end_time=$(date +%s)
@@ -79,7 +105,7 @@ run_test() {
     test_results["${test_name}"]="${test_result}"
     test_durations["${test_name}"]="${duration}"
     
-    # Capture test output
+    # Capture test output for report
     test_output=$(cat /tmp/test_output_${test_name}.log 2>/dev/null || echo "No output captured")
     
     # Clean up temp file
@@ -141,7 +167,7 @@ test_verify_quote_positive() {
 # Test 8: Positive - Run comprehensive verification
 test_comprehensive_verification_positive() {
     run_test "comprehensive_verification_positive" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Run comprehensive verification (POSITIVE)"
 }
 
@@ -149,27 +175,28 @@ test_comprehensive_verification_positive() {
 test_missing_files_negative() {
     log_info "Creating negative test scenario: missing files"
     
-    # Backup existing files
+    # Backup existing files (FIXED: only copy files, not directories)
     mkdir -p "${TEST_DIR}/backup"
-    cp -r "${JSON_DIR}"/* "${TEST_DIR}/backup/" 2>/dev/null || true
+    find "${JSON_DIR}" -maxdepth 1 -type f -exec cp {} "${TEST_DIR}/backup/" \; 2>/dev/null || true
     
     # Remove all TDX files
     rm -f "${JSON_DIR}"/tdx-*.json "${JSON_DIR}"/tdx-*.bin
     
     run_test "missing_files_negative" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Test verification with missing files (NEGATIVE)"
     
-    # Restore files
-    cp -r "${TEST_DIR}/backup"/* "${JSON_DIR}/" 2>/dev/null || true
+    # Restore files (FIXED: only copy files, not directories)
+    find "${TEST_DIR}/backup" -maxdepth 1 -type f -exec cp {} "${JSON_DIR}/" \; 2>/dev/null || true
 }
 
 # Test 10: Negative - Test with corrupted files
 test_corrupted_files_negative() {
     log_info "Creating negative test scenario: corrupted files"
     
-    # Backup existing files
-    cp -r "${JSON_DIR}" "${TEST_DIR}/backup_corrupted"
+    # Backup existing files (FIXED: only copy files, not directories)
+    mkdir -p "${TEST_DIR}/backup_corrupted"
+    find "${JSON_DIR}" -maxdepth 1 -type f -exec cp {} "${TEST_DIR}/backup_corrupted/" \; 2>/dev/null || true
     
     # Corrupt evidence file
     if [[ -f "${JSON_DIR}/tdx-local-evidence.json" ]]; then
@@ -182,19 +209,20 @@ test_corrupted_files_negative() {
     fi
     
     run_test "corrupted_files_negative" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Test verification with corrupted files (NEGATIVE)"
     
-    # Restore files
-    cp -r "${TEST_DIR}/backup_corrupted"/* "${JSON_DIR}/" 2>/dev/null || true
+    # Restore files (FIXED: only copy files, not directories)
+    find "${TEST_DIR}/backup_corrupted" -maxdepth 1 -type f -exec cp {} "${JSON_DIR}/" \; 2>/dev/null || true
 }
 
 # Test 11: Negative - Test with invalid JSON
 test_invalid_json_negative() {
     log_info "Creating negative test scenario: invalid JSON"
     
-    # Backup existing files
-    cp -r "${JSON_DIR}" "${TEST_DIR}/backup_invalid"
+    # Backup existing files (FIXED: only copy files, not directories)
+    mkdir -p "${TEST_DIR}/backup_invalid"
+    find "${JSON_DIR}" -maxdepth 1 -type f -exec cp {} "${TEST_DIR}/backup_invalid/" \; 2>/dev/null || true
     
     # Create invalid JSON
     if [[ -f "${JSON_DIR}/tdx-local-evidence.json" ]]; then
@@ -202,30 +230,31 @@ test_invalid_json_negative() {
     fi
     
     run_test "invalid_json_negative" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Test verification with invalid JSON (NEGATIVE)"
     
-    # Restore files
-    cp -r "${TEST_DIR}/backup_invalid"/* "${JSON_DIR}/" 2>/dev/null || true
+    # Restore files (FIXED: only copy files, not directories)
+    find "${TEST_DIR}/backup_invalid" -maxdepth 1 -type f -exec cp {} "${JSON_DIR}/" \; 2>/dev/null || true
 }
 
 # Test 12: Negative - Test with empty files
 test_empty_files_negative() {
     log_info "Creating negative test scenario: empty files"
     
-    # Backup existing files
-    cp -r "${JSON_DIR}" "${TEST_DIR}/backup_empty"
+    # Backup existing files (FIXED: only copy files, not directories)
+    mkdir -p "${TEST_DIR}/backup_empty"
+    find "${JSON_DIR}" -maxdepth 1 -type f -exec cp {} "${TEST_DIR}/backup_empty/" \; 2>/dev/null || true
     
     # Create empty files
     touch "${JSON_DIR}/tdx-local-evidence.json"
     touch "${JSON_DIR}/tdx-local-quote.bin"
     
     run_test "empty_files_negative" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Test verification with empty files (NEGATIVE)"
     
-    # Restore files
-    cp -r "${TEST_DIR}/backup_empty"/* "${JSON_DIR}/" 2>/dev/null || true
+    # Restore files (FIXED: only copy files, not directories)
+    find "${TEST_DIR}/backup_empty" -maxdepth 1 -type f -exec cp {} "${JSON_DIR}/" \; 2>/dev/null || true
 }
 
 # Test 13: Edge case - Test with mock data
@@ -238,7 +267,7 @@ test_mock_data_edge() {
 # Test 14: Edge case - Test verification with mock data
 test_verify_mock_data_edge() {
     run_test "verify_mock_data_edge" \
-        "./tdx-verifier.sh --all" \
+        "./tdx-verifier.sh" \
         "Verify mock data (EDGE CASE)"
 }
 
@@ -313,6 +342,136 @@ EOF
     
     echo "${report_data}" | jq '.' > "${TEST_REPORT}" 2>/dev/null || echo "${report_data}" > "${TEST_REPORT}"
     log_success "Test report generated: ${TEST_REPORT}"
+}
+
+# Create backup archives
+create_backup_archives() {
+    log_info "Creating backup archives..."
+    
+    # Create backup directory at same level as json and log folders
+    local backup_dir="${SCRIPT_DIR}/backup"
+    mkdir -p "${backup_dir}"
+    
+    # Create timestamp for unique filenames
+    local timestamp=$(date +%Y%m%d_%H%M%S)
+    local hostname_short=$(hostname | cut -d'.' -f1)
+    
+    # Create JSON archive
+    if [[ -d "${JSON_DIR}" && $(ls -A "${JSON_DIR}" 2>/dev/null) ]]; then
+        log_info "Archiving JSON files..."
+        local json_archive="${backup_dir}/tdx_json_${hostname_short}_${timestamp}.zip"
+        
+        if command -v zip >/dev/null 2>&1; then
+            cd "${JSON_DIR}"
+            zip -r "${json_archive}" . >/dev/null 2>&1
+            if [[ $? -eq 0 ]]; then
+                log_success "JSON archive created: ${json_archive}"
+            else
+                log_error "Failed to create JSON archive"
+            fi
+            cd "${SCRIPT_DIR}"
+        else
+            log_warning "zip command not found, creating tar archive instead"
+            local json_archive="${backup_dir}/tdx_json_${hostname_short}_${timestamp}.tar.gz"
+            tar -czf "${json_archive}" -C "${JSON_DIR}" . 2>/dev/null
+            if [[ $? -eq 0 ]]; then
+                log_success "JSON archive created: ${json_archive}"
+            else
+                log_error "Failed to create JSON archive"
+            fi
+        fi
+    else
+        log_warning "No JSON files found to archive"
+    fi
+    
+    # Create logs archive
+    if [[ -d "${LOG_DIR}" && $(ls -A "${LOG_DIR}" 2>/dev/null) ]]; then
+        log_info "Archiving log files..."
+        local logs_archive="${backup_dir}/tdx_logs_${hostname_short}_${timestamp}.zip"
+        
+        if command -v zip >/dev/null 2>&1; then
+            cd "${LOG_DIR}"
+            zip -r "${logs_archive}" . >/dev/null 2>&1
+            if [[ $? -eq 0 ]]; then
+                log_success "Logs archive created: ${logs_archive}"
+            else
+                log_error "Failed to create logs archive"
+            fi
+            cd "${SCRIPT_DIR}"
+        else
+            log_warning "zip command not found, creating tar archive instead"
+            local logs_archive="${backup_dir}/tdx_logs_${hostname_short}_${timestamp}.tar.gz"
+            tar -czf "${logs_archive}" -C "${LOG_DIR}" . 2>/dev/null
+            if [[ $? -eq 0 ]]; then
+                log_success "Logs archive created: ${logs_archive}"
+            else
+                log_error "Failed to create logs archive"
+            fi
+        fi
+    else
+        log_warning "No log files found to archive"
+    fi
+    
+    # Create comprehensive backup info file
+    local backup_info="${backup_dir}/tdx_backup_info_${hostname_short}_${timestamp}.txt"
+    cat > "${backup_info}" << EOF
+TDX Test Suite Backup Information
+================================
+
+Timestamp: $(date)
+Hostname: $(hostname)
+Kernel: $(uname -r)
+Architecture: $(uname -m)
+Script Version: 1.0.0
+
+Test Results Summary:
+- Total Tests: ${#test_results[@]}
+- Passed Tests: $(printf '%s\n' "${test_results[@]}" | grep -c "PASSED" || echo "0")
+- Failed Tests: $(printf '%s\n' "${test_results[@]}" | grep -c "FAILED" || echo "0")
+
+Archives Created:
+- JSON Archive: $(basename "${json_archive:-N/A}")
+- Logs Archive: $(basename "${logs_archive:-N/A}")
+
+TDX Status:
+$(dmesg | grep -i tdx | head -3 || echo "No TDX information available")
+
+System Information:
+- CPU: $(lscpu | grep 'Model name' | cut -d':' -f2 | xargs)
+- Memory: $(free -h | grep '^Mem:' | awk '{print $2}')
+- Uptime: $(uptime -p 2>/dev/null || uptime | cut -d',' -f1 | cut -d' ' -f4-)
+
+Files in JSON directory:
+$(ls -la "${JSON_DIR}" 2>/dev/null || echo "No JSON directory found")
+
+Files in LOG directory:
+$(ls -la "${LOG_DIR}" 2>/dev/null || echo "No LOG directory found")
+EOF
+    
+    log_success "Backup info file created: ${backup_info}"
+    
+    # Display backup summary
+    echo
+    log_info "=== Backup Archives Created ==="
+    echo "Backup directory: ${backup_dir}"
+    echo "JSON archive: $(basename "${json_archive:-N/A}")"
+    echo "Logs archive: $(basename "${logs_archive:-N/A}")"
+    echo "Backup info: $(basename "${backup_info}")"
+    echo
+    
+    # Show archive sizes
+    if [[ -f "${json_archive:-}" ]]; then
+        local json_size=$(du -h "${json_archive}" | cut -f1)
+        log_info "JSON archive size: ${json_size}"
+    fi
+    
+    if [[ -f "${logs_archive:-}" ]]; then
+        local logs_size=$(du -h "${logs_archive}" | cut -f1)
+        log_info "Logs archive size: ${logs_size}"
+    fi
+    
+    log_success "Backup archives created successfully!"
+    log_info "You can use these archives for future analysis"
 }
 
 # Display test summary
@@ -442,6 +601,9 @@ main() {
     generate_test_report
     display_test_summary
     
+    # Create backup archives
+    create_backup_archives
+    
     log_success "Comprehensive TDX test suite completed!"
     log_info "Detailed report: ${TEST_REPORT}"
     log_info "Log file: ${LOG_FILE}"
@@ -450,6 +612,7 @@ main() {
     echo "  - JSON files: ${JSON_DIR}"
     echo "  - Log files: ${LOG_DIR}"
     echo "  - Test files: ${TEST_DIR}"
+    echo "  - Backup archives: ${SCRIPT_DIR}/backup/"
 }
 
 # Handle script interruption
