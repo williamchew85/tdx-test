@@ -78,23 +78,58 @@ run_test() {
         log_error "Test ${test_name} FAILED (exit code: ${exit_code})"
         
         # Show detailed error information
-        log_error "=== FAILURE DETAILS ==="
+        log_error "=== FAILURE ANALYSIS ==="
+        log_error "Exit Code: ${exit_code}"
+        log_error "Test Command: ${test_command}"
+        
         if [[ -f /tmp/test_output_${test_name}.log ]]; then
-            log_error "Command output:"
+            log_error "Command Output:"
             cat /tmp/test_output_${test_name}.log | while IFS= read -r line; do
                 log_error "  ${line}"
             done
+            
+            # Analyze common failure patterns
+            log_error "=== FAILURE PATTERN ANALYSIS ==="
+            if grep -q "Permission denied" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → PERMISSION ISSUE: Try running with sudo"
+            fi
+            if grep -q "No such file or directory" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → MISSING FILE: Required files not found"
+            fi
+            if grep -q "command not found" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → MISSING COMMAND: Required tools not installed"
+            fi
+            if grep -q "Invalid JSON" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → JSON ERROR: Generated JSON is malformed"
+            fi
+            if grep -q "TDX not supported" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → TDX ISSUE: TDX not available on this system"
+            fi
+            if grep -q "timeout" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                log_error "  → TIMEOUT: Command took too long to execute"
+            fi
         else
             log_error "No output captured"
         fi
         
         # Show file system state for debugging
-        log_error "=== DEBUGGING INFO ==="
+        log_error "=== SYSTEM STATE ==="
         log_error "Current directory: $(pwd)"
         log_error "JSON directory contents:"
         ls -la "${JSON_DIR}/" 2>/dev/null | while IFS= read -r line; do
             log_error "  ${line}"
         done || log_error "  Cannot list JSON directory"
+        
+        # Check specific files for TDX tests
+        if [[ "${test_name}" == *"tdx"* ]] || [[ "${test_name}" == *"evidence"* ]] || [[ "${test_name}" == *"quote"* ]]; then
+            log_error "=== TDX-SPECIFIC DEBUGGING ==="
+            log_error "TDX Evidence file: $(test -f json/tdx-local-evidence.json && echo "EXISTS" || echo "MISSING")"
+            log_error "TDX Quote file: $(test -f json/tdx-local-quote.bin && echo "EXISTS" || echo "MISSING")"
+            log_error "TDX System Analysis: $(test -f json/tdx-system-analysis.json && echo "EXISTS" || echo "MISSING")"
+            log_error "CPU TDX support: $(grep -i tdx /proc/cpuinfo | wc -l) cores"
+            log_error "TDX modules loaded: $(lsmod | grep -i tdx | wc -l)"
+            log_error "TDX device available: $(test -e /dev/tdx_guest && echo "YES" || echo "NO")"
+        fi
         
         log_error "=== END FAILURE DETAILS ==="
     fi
@@ -145,23 +180,58 @@ run_test_with_exit_code() {
             log_error "Test ${test_name} FAILED (exit code: ${exit_code}, expected: ${expected_exit_code})"
             
             # Show detailed error information
-            log_error "=== FAILURE DETAILS ==="
+            log_error "=== FAILURE ANALYSIS ==="
+            log_error "Exit Code: ${exit_code} (expected: ${expected_exit_code})"
+            log_error "Test Command: ${test_command}"
+            
             if [[ -f /tmp/test_output_${test_name}.log ]]; then
-                log_error "Command output:"
+                log_error "Command Output:"
                 cat /tmp/test_output_${test_name}.log | while IFS= read -r line; do
                     log_error "  ${line}"
                 done
+                
+                # Analyze common failure patterns
+                log_error "=== FAILURE PATTERN ANALYSIS ==="
+                if grep -q "Permission denied" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → PERMISSION ISSUE: Try running with sudo"
+                fi
+                if grep -q "No such file or directory" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → MISSING FILE: Required files not found"
+                fi
+                if grep -q "command not found" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → MISSING COMMAND: Required tools not installed"
+                fi
+                if grep -q "Invalid JSON" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → JSON ERROR: Generated JSON is malformed"
+                fi
+                if grep -q "TDX not supported" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → TDX ISSUE: TDX not available on this system"
+                fi
+                if grep -q "timeout" /tmp/test_output_${test_name}.log 2>/dev/null; then
+                    log_error "  → TIMEOUT: Command took too long to execute"
+                fi
             else
                 log_error "No output captured"
             fi
             
             # Show file system state for debugging
-            log_error "=== DEBUGGING INFO ==="
+            log_error "=== SYSTEM STATE ==="
             log_error "Current directory: $(pwd)"
             log_error "JSON directory contents:"
             ls -la "${JSON_DIR}/" 2>/dev/null | while IFS= read -r line; do
                 log_error "  ${line}"
             done || log_error "  Cannot list JSON directory"
+            
+            # Check specific files for TDX tests
+            if [[ "${test_name}" == *"tdx"* ]] || [[ "${test_name}" == *"evidence"* ]] || [[ "${test_name}" == *"quote"* ]]; then
+                log_error "=== TDX-SPECIFIC DEBUGGING ==="
+                log_error "TDX Evidence file: $(test -f json/tdx-local-evidence.json && echo "EXISTS" || echo "MISSING")"
+                log_error "TDX Quote file: $(test -f json/tdx-local-quote.bin && echo "EXISTS" || echo "MISSING")"
+                log_error "TDX System Analysis: $(test -f json/tdx-system-analysis.json && echo "EXISTS" || echo "MISSING")"
+                log_error "CPU TDX support: $(grep -i tdx /proc/cpuinfo | wc -l) cores"
+                log_error "TDX modules loaded: $(lsmod | grep -i tdx | wc -l)"
+                log_error "TDX device available: $(test -e /dev/tdx_guest && echo "YES" || echo "NO")"
+            fi
             
             log_error "=== END FAILURE DETAILS ==="
         fi
@@ -571,6 +641,21 @@ display_test_summary() {
     log_success "Passed: ${passed_tests}"
     if [[ ${failed_tests} -gt 0 ]]; then
         log_error "Failed: ${failed_tests}"
+        echo
+        log_error "=== FAILURE SUMMARY ==="
+        for i in "${!test_results[@]}"; do
+            if [[ "${test_results[$i]}" == "FAILED" ]]; then
+                log_error "❌ ${test_names[$i]}: ${test_descriptions[$i]}"
+                # Show brief failure reason if available
+                if [[ -f "/tmp/test_output_${test_names[$i]}.log" ]]; then
+                    local first_error=$(head -1 /tmp/test_output_${test_names[$i]}.log 2>/dev/null | cut -c1-80)
+                    if [[ -n "${first_error}" ]]; then
+                        log_error "   Reason: ${first_error}"
+                    fi
+                fi
+            fi
+        done
+        echo
     else
         log_info "Failed: ${failed_tests}"
     fi
