@@ -285,11 +285,21 @@ display_analysis_summary() {
     echo
     
     if [[ -f "${ANALYSIS_REPORT}" ]]; then
-        local readiness=$(jq -r '.tdx_readiness_assessment.overall_readiness' "${ANALYSIS_REPORT}" 2>/dev/null || echo "UNKNOWN")
-        local cpu_support=$(jq -r '.tdx_readiness_assessment.cpu_support' "${ANALYSIS_REPORT}" 2>/dev/null || echo "0")
-        local kernel_support=$(jq -r '.tdx_readiness_assessment.kernel_support' "${ANALYSIS_REPORT}" 2>/dev/null || echo "0")
-        local memory_encryption=$(jq -r '.tdx_readiness_assessment.memory_encryption' "${ANALYSIS_REPORT}" 2>/dev/null || echo "false")
-        local device_available=$(jq -r '.tdx_readiness_assessment.device_available' "${ANALYSIS_REPORT}" 2>/dev/null || echo "false")
+        # Get values directly from system instead of JSON parsing
+        local cpu_support=$(grep -i tdx /proc/cpuinfo | wc -l)
+        local kernel_support=$(lsmod | grep -i tdx | wc -l)
+        local memory_encryption=$(dmesg | grep -i "Memory Encryption Features active" | grep -i tdx > /dev/null && echo "true" || echo "false")
+        local device_available=$(test -e /dev/tdx_guest && echo "true" || echo "false")
+        
+        # Determine readiness based on actual values
+        local readiness="UNKNOWN"
+        if [[ ${cpu_support} -gt 0 && ${kernel_support} -gt 0 && "${device_available}" == "true" ]]; then
+            readiness="READY"
+        elif [[ ${cpu_support} -gt 0 || ${kernel_support} -gt 0 ]]; then
+            readiness="PARTIAL"
+        else
+            readiness="NOT_READY"
+        fi
         
         log_info "TDX Readiness Assessment: ${readiness}"
         echo
