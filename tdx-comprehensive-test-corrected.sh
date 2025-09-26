@@ -142,7 +142,7 @@ test_verify_quote_positive() {
 # Test 8: Positive - Run comprehensive verification
 test_comprehensive_verification_positive() {
     run_test "comprehensive_verification_positive" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Run comprehensive verification (POSITIVE)"
 }
 
@@ -158,7 +158,7 @@ test_missing_files_negative() {
     rm -f "${JSON_DIR}"/tdx-*.json "${JSON_DIR}"/tdx-*.bin
     
     run_test "missing_files_negative" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Test verification with missing files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -184,7 +184,7 @@ test_corrupted_files_negative() {
     fi
     
     run_test "corrupted_files_negative" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Test verification with corrupted files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -205,7 +205,7 @@ test_invalid_json_negative() {
     fi
     
     run_test "invalid_json_negative" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Test verification with invalid JSON (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -225,7 +225,7 @@ test_empty_files_negative() {
     touch "${JSON_DIR}/tdx-local-quote.bin"
     
     run_test "empty_files_negative" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Test verification with empty files (NEGATIVE)"
     
     # Restore files (FIXED: only copy files, not directories)
@@ -242,7 +242,7 @@ test_mock_data_edge() {
 # Test 14: Edge case - Test verification with mock data
 test_verify_mock_data_edge() {
     run_test "verify_mock_data_edge" \
-        "./tdx-verifier-improved.sh --all" \
+        "timeout 30 ./tdx-verifier-robust.sh --all" \
         "Verify mock data (EDGE CASE)"
 }
 
