@@ -446,6 +446,9 @@ main() {
     generate_test_report
     display_test_summary
     
+    # Create backup archives
+    create_backup_archives
+    
     log_success "Comprehensive TDX test suite completed!"
     log_info "Detailed report: ${TEST_REPORT}"
     log_info "Log file: ${LOG_FILE}"
@@ -454,6 +457,7 @@ main() {
     echo "  - JSON files: ${JSON_DIR}"
     echo "  - Log files: ${LOG_DIR}"
     echo "  - Test files: ${TEST_DIR}"
+    echo "  - Backup archives: ${SCRIPT_DIR}/../backup/"
 }
 
 # Handle script interruption
