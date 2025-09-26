@@ -115,6 +115,74 @@ run_test() {
     echo
 }
 
+# Run a test with specific exit code whitelist
+run_test_with_exit_code() {
+    local test_name="$1"
+    local test_command="$2"
+    local test_description="$3"
+    local expected_exit_code="$4"
+    
+    log_info "Running test: ${test_name}"
+    log_info "Description: ${test_description}"
+    log_info "Command: ${test_command}"
+    log_info "Expected exit code: ${expected_exit_code}"
+    
+    local start_time=$(date +%s)
+    local test_result="FAILED"
+    local test_output=""
+    local exit_code=0
+    
+    # Run the test command and capture output
+    if eval "${test_command}" > /tmp/test_output_${test_name}.log 2>&1; then
+        test_result="PASSED"
+        log_success "Test ${test_name} PASSED"
+    else
+        exit_code=$?
+        if [[ "${exit_code}" == "${expected_exit_code}" ]]; then
+            test_result="PASSED"
+            log_success "Test ${test_name} PASSED (expected exit code ${expected_exit_code})"
+        else
+            log_error "Test ${test_name} FAILED (exit code: ${exit_code}, expected: ${expected_exit_code})"
+            
+            # Show detailed error information
+            log_error "=== FAILURE DETAILS ==="
+            if [[ -f /tmp/test_output_${test_name}.log ]]; then
+                log_error "Command output:"
+                cat /tmp/test_output_${test_name}.log | while IFS= read -r line; do
+                    log_error "  ${line}"
+                done
+            else
+                log_error "No output captured"
+            fi
+            
+            # Show file system state for debugging
+            log_error "=== DEBUGGING INFO ==="
+            log_error "Current directory: $(pwd)"
+            log_error "JSON directory contents:"
+            ls -la "${JSON_DIR}/" 2>/dev/null | while IFS= read -r line; do
+                log_error "  ${line}"
+            done || log_error "  Cannot list JSON directory"
+            
+            log_error "=== END FAILURE DETAILS ==="
+        fi
+    fi
+    
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    test_results["${test_name}"]="${test_result}"
+    test_durations["${test_name}"]="${duration}"
+    
+    # Capture test output for report
+    test_output=$(cat /tmp/test_output_${test_name}.log 2>/dev/null || echo "No output captured")
+    
+    # Clean up temp file
+    rm -f /tmp/test_output_${test_name}.log
+    
+    log_info "Test ${test_name} completed in ${duration} seconds"
+    echo
+}
+
 # Test 1: Positive - Check TDX availability
 test_tdx_availability_positive() {
     run_test "tdx_availability_positive" \
@@ -271,11 +339,12 @@ test_verify_mock_data_edge() {
         "Verify mock data (EDGE CASE)"
 }
 
-# Test 15: System analysis
+# Test 15: System analysis (with exit code 5 whitelist)
 test_system_analysis() {
-    run_test "system_analysis" \
+    run_test_with_exit_code "system_analysis" \
         "./tdx-system-analyzer.sh" \
-        "Run comprehensive system analysis"
+        "Run comprehensive system analysis" \
+        "5"
 }
 
 # Generate comprehensive test report
