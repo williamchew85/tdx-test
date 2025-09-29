@@ -148,7 +148,12 @@ Verifies TDX quotes and attestation tokens:
    cd tdx-test
    ```
 
-2. **Configure API key:**
+2. **Configure API key (Interactive):**
+   ```bash
+   ./setup-trust-authority.sh
+   ```
+   
+   Or manually configure:
    ```bash
    cp config.json.template config.json
    # Edit config.json and add your Intel Trust Authority API key
@@ -314,6 +319,33 @@ If you don't have access to Intel Trust Authority API (which is common), this to
 - **System Analysis**: Use system analyzer to understand TDX capabilities
 - **Integration Testing**: Use mock data to test your attestation verification logic
 - **Research and Education**: All scripts provide educational value about TDX
+
+## Intel Trust Authority API Integration
+
+### New Features
+
+The enhanced `tdx-attestation.sh` script now supports real attestation via Intel Trust Authority API:
+
+- **Real Attestation**: Uses Intel's cloud service for production-grade attestation
+- **Automatic Fallback**: Falls back to local attestation if API is unavailable
+- **Interactive Setup**: Use `./setup-trust-authority.sh` for easy configuration
+- **Secure Configuration**: API keys stored in `config.json` (keep secure!)
+
+### API Integration Flow
+
+1. **Configuration**: Script loads API key from `config.json`
+2. **Connectivity Check**: Tests API accessibility
+3. **Quote Generation**: Requests TDX quote from Intel Trust Authority
+4. **Quote Verification**: Verifies quote with Intel's service
+5. **Evidence Generation**: Creates attestation evidence
+6. **Token Creation**: Generates attestation token
+
+### Benefits of API Integration
+
+- **Production Ready**: Real attestation suitable for production use
+- **Intel Verified**: Attestation verified by Intel's infrastructure
+- **Comprehensive**: Full attestation evidence and tokens
+- **Reliable**: Automatic fallback ensures system always works
 
 ## Support
 

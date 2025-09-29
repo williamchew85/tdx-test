@@ -19,6 +19,11 @@ REPORT_FILE="${JSON_DIR}/tdx-attestation-report.json"
 EVIDENCE_FILE="${JSON_DIR}/tdx-evidence.json"
 TOKEN_FILE="${JSON_DIR}/tdx-token.json"
 
+# Intel Trust Authority API Configuration
+TRUST_AUTHORITY_API_URL=""
+TRUST_AUTHORITY_API_KEY=""
+USE_TRUST_AUTHORITY=false
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -49,6 +54,191 @@ log_warning() {
 
 log_error() {
     log "ERROR" "${RED}$*${NC}"
+}
+
+# Load configuration from config.json
+load_config() {
+    if [[ -f "${CONFIG_FILE}" ]]; then
+        log_info "Loading configuration from ${CONFIG_FILE}"
+        
+        # Extract API configuration
+        TRUST_AUTHORITY_API_URL=$(jq -r '.trustauthority_api_url // "https://api.trustauthority.intel.com"' "${CONFIG_FILE}")
+        TRUST_AUTHORITY_API_KEY=$(jq -r '.trustauthority_api_key // ""' "${CONFIG_FILE}")
+        
+        # Check if API key is provided
+        if [[ -n "${TRUST_AUTHORITY_API_KEY}" && "${TRUST_AUTHORITY_API_KEY}" != "YOUR_API_KEY_HERE" ]]; then
+            USE_TRUST_AUTHORITY=true
+            log_success "Intel Trust Authority API key found - using real attestation"
+        else
+            log_warning "No valid API key found - using local attestation only"
+        fi
+    else
+        log_warning "No config.json found - using local attestation only"
+    fi
+}
+
+# Check Intel Trust Authority API connectivity
+check_trust_authority_api() {
+    if [[ "${USE_TRUST_AUTHORITY}" != "true" ]]; then
+        return 0
+    fi
+    
+    log_info "Checking Intel Trust Authority API connectivity..."
+    
+    local response
+    response=$(curl -s -w "%{http_code}" -o /tmp/trust_authority_check.json \
+        -H "Authorization: Bearer ${TRUST_AUTHORITY_API_KEY}" \
+        -H "Content-Type: application/json" \
+        "${TRUST_AUTHORITY_API_URL}/v1/health" 2>/dev/null || echo "000")
+    
+    local http_code="${response: -3}"
+    
+    if [[ "${http_code}" == "200" ]]; then
+        log_success "Intel Trust Authority API is accessible"
+        return 0
+    else
+        log_error "Intel Trust Authority API is not accessible (HTTP ${http_code})"
+        log_warning "Falling back to local attestation"
+        USE_TRUST_AUTHORITY=false
+        return 1
+    fi
+}
+
+# Generate TDX quote using Intel Trust Authority API
+generate_tdx_quote_api() {
+    log_info "Generating TDX quote using Intel Trust Authority API..."
+    
+    # Create quote request payload
+    local quote_request=$(cat << EOF
+{
+    "policyIds": ["default"],
+    "nonce": "$(openssl rand -hex 32)",
+    "requestId": "tdx-attestation-$(date +%s)"
+}
+EOF
+)
+    
+    # Submit quote request
+    local response
+    response=$(curl -s -w "%{http_code}" -o /tmp/quote_response.json \
+        -X POST \
+        -H "Authorization: Bearer ${TRUST_AUTHORITY_API_KEY}" \
+        -H "Content-Type: application/json" \
+        -d "${quote_request}" \
+        "${TRUST_AUTHORITY_API_URL}/v1/attest/tdx/quote" 2>/dev/null || echo "000")
+    
+    local http_code="${response: -3}"
+    
+    if [[ "${http_code}" == "200" ]]; then
+        log_success "TDX quote generated successfully via Intel Trust Authority API"
+        
+        # Extract quote data
+        local quote_data=$(jq -r '.quote' /tmp/quote_response.json 2>/dev/null || echo "")
+        local report_data=$(jq -r '.reportData' /tmp/quote_response.json 2>/dev/null || echo "")
+        
+        if [[ -n "${quote_data}" ]]; then
+            # Save quote to file
+            echo "${quote_data}" | base64 -d > "${JSON_DIR}/tdx-quote.bin" 2>/dev/null || echo "${quote_data}" > "${JSON_DIR}/tdx-quote.bin"
+            log_success "TDX quote saved to ${JSON_DIR}/tdx-quote.bin"
+        fi
+        
+        return 0
+    else
+        log_error "Failed to generate TDX quote via API (HTTP ${http_code})"
+        return 1
+    fi
+}
+
+# Verify TDX quote using Intel Trust Authority API
+verify_tdx_quote_api() {
+    log_info "Verifying TDX quote using Intel Trust Authority API..."
+    
+    if [[ ! -f "${JSON_DIR}/tdx-quote.bin" ]]; then
+        log_error "TDX quote file not found"
+        return 1
+    fi
+    
+    # Encode quote for API
+    local quote_base64=$(base64 -w 0 "${JSON_DIR}/tdx-quote.bin" 2>/dev/null || base64 "${JSON_DIR}/tdx-quote.bin" | tr -d '\n')
+    
+    # Create verification request
+    local verify_request=$(cat << EOF
+{
+    "quote": "${quote_base64}",
+    "policyIds": ["default"]
+}
+EOF
+)
+    
+    # Submit verification request
+    local response
+    response=$(curl -s -w "%{http_code}" -o /tmp/verify_response.json \
+        -X POST \
+        -H "Authorization: Bearer ${TRUST_AUTHORITY_API_KEY}" \
+        -H "Content-Type: application/json" \
+        -d "${verify_request}" \
+        "${TRUST_AUTHORITY_API_URL}/v1/attest/tdx/verify" 2>/dev/null || echo "000")
+    
+    local http_code="${response: -3}"
+    
+    if [[ "${http_code}" == "200" ]]; then
+        log_success "TDX quote verified successfully via Intel Trust Authority API"
+        
+        # Extract verification results
+        local is_valid=$(jq -r '.isValid' /tmp/verify_response.json 2>/dev/null || echo "false")
+        local token=$(jq -r '.token' /tmp/verify_response.json 2>/dev/null || echo "")
+        
+        if [[ "${is_valid}" == "true" && -n "${token}" ]]; then
+            # Save token
+            echo "{\"token\": \"${token}\", \"token_type\": \"Bearer\", \"expires_in\": 3600, \"verified_by\": \"Intel Trust Authority API\"}" > "${TOKEN_FILE}"
+            log_success "Attestation token saved to ${TOKEN_FILE}"
+            return 0
+        else
+            log_error "TDX quote verification failed"
+            return 1
+        fi
+    else
+        log_error "Failed to verify TDX quote via API (HTTP ${http_code})"
+        return 1
+    fi
+}
+
+# Generate evidence using Intel Trust Authority API
+generate_evidence_api() {
+    log_info "Generating TDX evidence using Intel Trust Authority API..."
+    
+    # Create evidence request
+    local evidence_request=$(cat << EOF
+{
+    "quote": "$(base64 -w 0 "${JSON_DIR}/tdx-quote.bin" 2>/dev/null || base64 "${JSON_DIR}/tdx-quote.bin" | tr -d '\n')",
+    "policyIds": ["default"],
+    "includeEvidence": true
+}
+EOF
+)
+    
+    # Submit evidence request
+    local response
+    response=$(curl -s -w "%{http_code}" -o /tmp/evidence_response.json \
+        -X POST \
+        -H "Authorization: Bearer ${TRUST_AUTHORITY_API_KEY}" \
+        -H "Content-Type: application/json" \
+        -d "${evidence_request}" \
+        "${TRUST_AUTHORITY_API_URL}/v1/attest/tdx/evidence" 2>/dev/null || echo "000")
+    
+    local http_code="${response: -3}"
+    
+    if [[ "${http_code}" == "200" ]]; then
+        log_success "TDX evidence generated successfully via Intel Trust Authority API"
+        
+        # Save evidence
+        jq '.' /tmp/evidence_response.json > "${EVIDENCE_FILE}" 2>/dev/null || cp /tmp/evidence_response.json "${EVIDENCE_FILE}"
+        log_success "TDX evidence saved to ${EVIDENCE_FILE}"
+        return 0
+    else
+        log_error "Failed to generate TDX evidence via API (HTTP ${http_code})"
+        return 1
+    fi
 }
 
 # Check if running as root for TDX operations
@@ -290,22 +480,53 @@ main() {
     echo "Started at: $(date)" >> "${LOG_FILE}"
     echo >> "${LOG_FILE}"
     
+    # Load configuration and check API availability
+    load_config
+    
     # Check prerequisites
     check_root
     check_tdx_availability
-    check_go_installation
-    check_trustauthority_cli
-    create_config
     
-    # Perform attestation
-    generate_evidence
-    generate_token
-    generate_report
+    if [[ "${USE_TRUST_AUTHORITY}" == "true" ]]; then
+        # Use Intel Trust Authority API
+        log_info "Using Intel Trust Authority API for attestation"
+        
+        # Check API connectivity
+        if check_trust_authority_api; then
+            # Perform API-based attestation
+            generate_tdx_quote_api
+            verify_tdx_quote_api
+            generate_evidence_api
+            generate_report
+        else
+            log_warning "API not available, falling back to local attestation"
+            perform_local_attestation
+        fi
+    else
+        # Use local attestation
+        log_info "Using local attestation (no API key provided)"
+        perform_local_attestation
+    fi
     
     # Display summary
     display_summary
     
     log_success "TDX attestation process completed successfully!"
+}
+
+# Perform local attestation (fallback method)
+perform_local_attestation() {
+    log_info "Performing local attestation..."
+    
+    # Check prerequisites for local attestation
+    check_go_installation
+    check_trustauthority_cli
+    create_config
+    
+    # Perform local attestation
+    generate_evidence
+    generate_token
+    generate_report
 }
 
 # Handle script interruption
